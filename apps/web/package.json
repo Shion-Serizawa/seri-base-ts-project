@@ -1,0 +1,39 @@
+{
+  "name": "@seri/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@seri/api": "workspace:*",
+    "@seri/contract": "workspace:*",
+    "@seri/domain": "workspace:*",
+    "@tanstack/react-query": "5.101.4",
+    "@tanstack/react-router": "1.170.29",
+    "better-auth": "1.6.29",
+    "hono": "4.13.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@seri/tsconfig": "workspace:*",
+    "@seri/vitest-config": "workspace:*",
+    "@tanstack/router-plugin": "1.168.32",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.4",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "6.0.5",
+    "happy-dom": "20.11.2",
+    "vite": "8.2.1"
+  }
+}

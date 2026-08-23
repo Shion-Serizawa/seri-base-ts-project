@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "seri-base-web",
+  "compatibility_date": "2026-08-01",
+  "observability": { "enabled": true },
+  // SPA を Workers Static Assets で配信する（リクエスト課金なし・無料枠内）
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+  },
+}
