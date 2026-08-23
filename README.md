@@ -35,7 +35,7 @@ Hono は HTTP レイヤ（CORS・better-auth の委譲・ヘルスチェック�
 ## セットアップ
 
 ```bash
-mise install                 # node / bun を mise.lock のチェックサム付きで導入
+mise install                 # node / bun / gitleaks を mise.lock のチェックサム付きで導入
 bun install                  # lefthook のフック登録と wrangler types 生成まで自動で走る
 cp apps/api/.dev.vars.example apps/api/.dev.vars   # BETTER_AUTH_SECRET を設定
 
@@ -71,16 +71,30 @@ oxlint / stryker / jscpd の設定ファイル側の数値と食い違ってい�
 指標は「単独でハックすると別の指標が悪化する」ように選んでいる。詳細は
 [docs/adr/0002-fitness-functions.md](docs/adr/0002-fitness-functions.md)。
 
-| #   | 指標                                             | 強制場所               | ハック手段             | 牽制する指標               |
-| --- | ------------------------------------------------ | ---------------------- | ---------------------- | -------------------------- |
-| ①   | カバレッジ 80%（行/分岐/関数/文）                | Vitest                 | アサーションなしテスト | ④ + `vitest/expect-expect` |
-| ②   | test ratio 0.50〜2.50                            | `bun run fitness`      | テストのコピペ膨張     | ③（上限側で効く）          |
-| ③   | 重複率 3% 以下                                   | jscpd                  | 過度な共通化           | ⑤                          |
-| ④   | ミューテーションスコア 60% 以上                  | CI（変更ファイルのみ） | —                      | ① と対                     |
-| ⑤   | 循環的複雑度 10 / ネスト 3 / 関数 50 行 / 引数 4 | oxlint                 | 無意味な関数分割       | ⑥ ③                        |
-| ⑥   | 未使用 export・未使用依存ゼロ                    | knip                   | —                      | ⑤                          |
-| ⑦   | 層をまたぐ依存・循環依存ゼロ                     | oxlint                 | —                      | —                          |
-| ⑧   | バンドルサイズ（gzip: api 550kB / web 160kB）    | `bun run fitness`      | 依存を足して楽をする   | ⑤                          |
+| #   | 指標                                                | 強制場所               | ハック手段             | 牽制する指標                         |
+| --- | --------------------------------------------------- | ---------------------- | ---------------------- | ------------------------------------ |
+| ①   | カバレッジ 80%（行/分岐/関数/文、**ファイル単位**） | Vitest                 | アサーションなしテスト | ④ + `vitest/expect-expect`           |
+| ②   | test ratio **上限のみ** 2.50                        | `bun run fitness`      | —                      | 「量を増やす」方向への牽制（③ と対） |
+| ③   | 重複率 3% 以下                                      | jscpd                  | 過度な共通化           | ⑤                                    |
+| ④   | ミューテーションスコア 60% 以上                     | CI（変更ファイルのみ） | —                      | ① と対                               |
+| ⑤   | 循環的複雑度 10 / ネスト 3 / 関数 50 行 / 引数 4    | oxlint                 | 無意味な関数分割       | ⑥ ③                                  |
+| ⑥   | 未使用 export・未使用依存ゼロ                       | knip                   | —                      | ⑤                                    |
+| ⑦   | 層をまたぐ依存・循環依存ゼロ                        | oxlint                 | —                      | —                                    |
+| ⑧   | バンドルサイズ（gzip: api 550kB / web 160kB）       | `bun run fitness`      | 依存を足して楽をする   | ⑤                                    |
+| ⑨   | シークレットの混入ゼロ（作業ツリー + git 履歴）     | gitleaks               | —                      | —                                    |
+| ⑩   | スキーマとマイグレーションの乖離ゼロ                | drizzle-kit            | —                      | —                                    |
+
+**test ratio に下限を置いていないのは意図的です。** 下限は `it.each` のようなテーブル駆動化
+（テスト行数が減ってカバレッジとミューテーションスコアは上がる書き方）を罰してしまい、
+「量を足す」方向の圧力になります。テストが足りない側は ① の**ファイル単位**カバレッジと
+④ ミューテーションスコアの方が正確に検出できます。
+
+型そのものの退化（branded type を外す、入力型を広げる等）は
+`packages/contract/src/*.test-d.ts` の型テスト（`vitest --typecheck`）で止めています。
+
+決定的でない処理（`Date.now` / `Math.random` / `crypto.randomUUID`）は `packages/domain` では
+禁止しています（時刻や乱数は引数で受け取る）。Workers で `process.env` を読むことも禁止です
+（バインディングを使う）。
 
 `any` の混入は「割合」ではなく **error** で禁止している（`typescript/no-unsafe-*`、
 `no-explicit-any`、`no-unsafe-type-assertion`、`ban-ts-comment`）。
@@ -104,6 +118,11 @@ oxlint / stryker / jscpd の設定ファイル側の数値と食い違ってい�
 - **postinstall 無効**: Bun は依存パッケージのライフサイクルスクリプトを既定で実行しない（`trustedDependencies` は空）
 - **GitHub Actions**: すべて 40 桁のコミット SHA で固定（可変タグ禁止）。適応度関数が検査する
 - **audit**: CI は `bun audit --audit-level=high` で失敗させる
+- **シークレット検査**: gitleaks（mise 管理・`mise.lock` で固定）で作業ツリーと git 履歴を走査。
+  `bun run fitness` に含まれるため pre-push でも走る
+
+> `bun audit` は pre-push には入れていません。フックのシェルから `bun` が引けない環境があるためで、
+> CI 側のゲートに寄せています。
 
 緊急のセキュリティ修正を遅延を無視して取り込む場合のみ:
 
