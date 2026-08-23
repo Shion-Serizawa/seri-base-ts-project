@@ -8,9 +8,9 @@
 ```
 apps/
   web/          Vite + React + TanStack Router (SPA) → Workers Static Assets
-  api/          Hono Worker（D1 / better-auth / Hono RPC）
+  api/          Hono Worker（oRPC / D1 / better-auth）
 packages/
-  contract/     zod スキーマと共有型（最下層。他に依存しない）
+  contract/     oRPC の API 契約と zod スキーマ（最下層。他に依存しない）
   domain/       純粋なビジネスロジック（I/O なし）
   db/           Drizzle スキーマとマイグレーション
 tooling/
@@ -22,9 +22,15 @@ scripts/
   mutation/      変更ファイルのみのミューテーションテスト
 ```
 
-依存の向きは `contract → domain → db → api → web` の一方向。`apps/web` は `apps/api` を
-**型としてのみ**参照する（Hono RPC の型共有）。これは oxlint の `no-restricted-imports`
-（`allowTypeImports`）で強制している。
+依存の向きは `contract → domain → db → api → web` の一方向。
+API は **oRPC の contract-first** で、`apps/web` は `packages/contract` の契約からのみ型を得る
+（`apps/api` への依存は無い）。境界は oxlint の `no-restricted-imports` で強制している。
+
+- サーバ: `implement(apiContract)` → `RPCHandler` を Hono の `/api/rpc/*` にマウント
+- クライアント: `createORPCClient(RPCLink)` + `@orpc/tanstack-query`
+
+Hono は HTTP レイヤ（CORS・better-auth の委譲・ヘルスチェック）専用。
+詳細は [docs/adr/0004-orpc-contract-first.md](docs/adr/0004-orpc-contract-first.md)。
 
 ## セットアップ
 
@@ -110,3 +116,4 @@ bun add <pkg> --minimum-release-age=0
 - E2E（Playwright）: 現在ルーティングの結線（`apps/web/src/routes/**`）だけがテスト対象外
 - AI Coding 向けの環境整備（CLAUDE.md、スキル、MCP など）
 - 認証 UI（サインイン・サインアップ画面）。API と認証クライアントの結線までは完了している
+- OpenAPI ドキュメント生成（`@orpc/openapi` を足せば可能）
