@@ -1,3 +1,4 @@
+export { apiContract, todoContract } from './todo-contract.ts';
 export {
   createTodoInputSchema,
   TODO_TITLE_MAX_LENGTH,
