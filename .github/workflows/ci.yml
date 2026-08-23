@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 既定を read-only にする（サプライチェーン対策: 汚染された action に書き込み権限を渡さない）
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  DO_NOT_TRACK: 1
+
+jobs:
+  quality:
+    name: quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # すべての action は可変タグではなくコミット SHA で固定する。
+      # scripts/fitness/checks/supply-chain.ts がこの固定を検査している。
+      - name: checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          # ミューテーションテストの差分算出にベースブランチが必要
+          fetch-depth: 0
+
+      # mise.toml + mise.lock からツールチェーンを復元する（チェックサム検証つき）
+      - name: setup toolchain (mise)
+        uses: jdx/mise-action@eb2f5cb41b0a8175dad2f797e3daca6fe7795a19 # v2.4.2
+        with:
+          version: 2026.8.10
+          cache: true
+
+      - name: cache turbo
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      # lockfile から一切ずれないことを保証する
+      - name: install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: supply chain gates
+        run: bun run fitness:deps
+
+      - name: audit (high 以上で失敗)
+        run: bun audit --audit-level=high
+
+      - name: audit report (moderate 以下は参考表示)
+        run: bun audit || true
+
+      - name: format check
+        run: bun run format:check
+
+      - name: lint (type-aware)
+        run: bun run lint
+
+      - name: typecheck
+        run: |
+          bun run typecheck
+          bunx tsc --noEmit -p tsconfig.json
+
+      - name: test with coverage
+        run: bun run test:coverage
+
+      - name: build
+        run: bun run build
+
+      - name: fitness functions
+        run: bun run fitness
+
+  mutation:
+    name: mutation score (changed files)
+    if: github.event_name == 'pull_request'
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+
+      - name: setup toolchain (mise)
+        uses: jdx/mise-action@eb2f5cb41b0a8175dad2f797e3daca6fe7795a19 # v2.4.2
+        with:
+          version: 2026.8.10
+          cache: true
+
+      - name: install dependencies
+        run: bun install --frozen-lockfile
+
+      # 変更された実装ファイルだけを対象にする（全体だと時間がかかりすぎる）
+      - name: mutation testing
+        env:
+          MUTATION_BASE_REF: origin/${{ github.base_ref }}
+        run: bun run mutation

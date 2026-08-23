@@ -1,0 +1,52 @@
+# Git フック。`bun install` 時の prepare で `lefthook install` が走る。
+#
+# 方針:
+#   pre-commit  … 差分ファイルのみ。1 秒以内で終わる範囲（フォーマット + 型情報なし Lint）
+#   pre-push    … リポジトリ全体。型情報つき Lint・型検査・全テスト・適応度関数
+#   commit-msg  … Conventional Commits 形式のチェック
+#
+# 実行コマンドは `node` と `node_modules/.bin/*` に限定している。
+# フックのシェルからは `bun` が PATH 上に無い環境（バージョン管理ツールのシムが
+# シェル統合前提の場合など）があり、`bun run ...` だと環境依存で壊れるため。
+# TypeScript のスクリプトは Node 24 のネイティブ型ストリッピングで直接実行する。
+#
+# 緊急時は `git commit --no-verify` / `git push --no-verify` で回避できるが、CI で必ず捕まる。
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: format
+      glob: '*.{ts,tsx,js,mjs,json,jsonc}'
+      run: node_modules/.bin/oxfmt {staged_files}
+      stage_fixed: true
+
+    - name: lint
+      glob: '*.{ts,tsx}'
+      run: node_modules/.bin/oxlint {staged_files}
+
+    - name: supply-chain
+      glob: '{package.json,bunfig.toml,mise.toml,.github/workflows/*.yml}'
+      run: node scripts/fitness/supply-chain.ts
+
+commit-msg:
+  jobs:
+    - name: conventional commits
+      run: node scripts/git/check-commit-message.ts {1}
+
+pre-push:
+  parallel: false
+  jobs:
+    - name: lint (type-aware)
+      run: node_modules/.bin/oxlint --type-aware
+
+    - name: typecheck
+      run: node_modules/.bin/turbo run typecheck
+
+    - name: typecheck (scripts)
+      run: node_modules/.bin/tsc --noEmit -p tsconfig.json
+
+    - name: test with coverage
+      run: node_modules/.bin/turbo run test:coverage
+
+    - name: fitness functions
+      run: node scripts/fitness/run.ts
