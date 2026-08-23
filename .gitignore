@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.turbo/
+coverage/
+reports/
+.stryker-tmp/
+stryker.log
+.wrangler/
+.dev.vars
+*.log
+.DS_Store
+worker-configuration.d.ts

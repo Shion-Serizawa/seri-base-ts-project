@@ -1,0 +1,53 @@
+{
+  "name": "@seri/base",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "tooling/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "lint": "oxlint --type-aware",
+    "lint:quick": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "fitness": "bun run scripts/fitness/run.ts",
+    "fitness:deps": "bun run scripts/fitness/supply-chain.ts",
+    "deps:audit": "bun audit",
+    "knip": "knip",
+    "jscpd": "jscpd",
+    "mutation": "bun run scripts/mutation/run-changed.ts",
+    "prepare": "lefthook install && bun run --filter @seri/api cf-typegen"
+  },
+  "devDependencies": {
+    "@seri/quality-gates": "workspace:*",
+    "@stryker-mutator/core": "10.0.0",
+    "@stryker-mutator/vitest-runner": "10.0.0",
+    "@types/node": "26.2.0",
+    "@vitest/coverage-istanbul": "4.1.10",
+    "@vitest/coverage-v8": "4.1.10",
+    "drizzle-kit": "0.31.10",
+    "jscpd": "5.0.16",
+    "knip": "6.32.2",
+    "lefthook": "2.1.10",
+    "oxfmt": "0.64.0",
+    "oxlint": "1.79.0",
+    "oxlint-tsgolint": "7.0.2001",
+    "turbo": "2.10.11",
+    "typescript": "7.0.2",
+    "vite": "8.2.1",
+    "vitest": "4.1.10",
+    "wrangler": "4.125.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "bun@1.4.0"
+}
