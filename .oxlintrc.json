@@ -53,6 +53,16 @@
     "no-else-return": "error",
     "func-style": ["error", "declaration", { "allowArrowFunctions": true }],
     "no-console": ["error", { "allow": ["error", "warn"] }],
+    // Workers では環境変数ではなくバインディング（Cloudflare.Env）を使う。
+    // process.env は本番で undefined になり、しかも型で守られない
+    "node/no-process-env": "error",
+    // やり残しはコメントではなく issue で管理する。
+    // `todo` を term に含めていないのは、このリポジトリのサンプルドメインが "Todo" で、
+    // 「Todo の識別子」のような正当なコメントが全部引っかかるため。
+    // Todo 以外のドメインなら "todo" も term に加えるとよい。
+    "no-warning-comments": ["error", { "terms": ["fixme", "xxx", "hack"], "location": "anywhere" }],
+    // ファイル名は kebab-case で統一する（AI と grep の参照解決が安定する）
+    "unicorn/filename-case": ["error", { "case": "kebabCase" }],
     // 名前付きエクスポートを標準にする（grep・リネーム・AI の参照解決が安定する）
     "import/no-default-export": "error",
     "import/no-cycle": "error",
@@ -176,6 +186,26 @@
               { "name": "@seri/api", "message": "domain は純粋なロジック。アプリに依存できない" }
             ]
           }
+        ],
+        // domain は決定的でなければならない。現在時刻や乱数は引数で受け取る。
+        // ここを許すとテストが時刻依存になり、ミューテーションテストも不安定になる
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "Date",
+            "property": "now",
+            "message": "domain は決定的に保つ。現在時刻は引数で受け取る"
+          },
+          {
+            "object": "Math",
+            "property": "random",
+            "message": "domain は決定的に保つ。乱数は引数で受け取る"
+          },
+          {
+            "object": "crypto",
+            "property": "randomUUID",
+            "message": "domain は決定的に保つ。ID の生成は呼び出し側で行う"
+          }
         ]
       }
     },
@@ -219,7 +249,7 @@
       }
     },
     {
-      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/test/**"],
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.test-d.ts", "**/*.spec.ts", "**/test/**"],
       "rules": {
         "max-lines": "off",
         "max-lines-per-function": "off",
@@ -253,7 +283,17 @@
       "rules": {
         "no-console": "off",
         "node/no-sync": "off",
-        "max-statements": "off"
+        "max-statements": "off",
+        // 計測スクリプトはローカル/CI で動く Node プロセスなので環境変数を読んでよい
+        "node/no-process-env": "off"
+      }
+    },
+    {
+      // TanStack Router のファイルベースルーティングは __root.tsx など
+      // 規約で決まった名前を要求するため、ファイル名の規則から除外する
+      "files": ["apps/web/src/routes/**"],
+      "rules": {
+        "unicorn/filename-case": "off"
       }
     }
   ],
