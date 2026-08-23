@@ -1,0 +1,46 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": [
+        "scripts/fitness/run.ts",
+        "scripts/fitness/supply-chain.ts",
+        "scripts/mutation/run-changed.ts",
+        "scripts/git/check-commit-message.ts"
+      ],
+      "project": ["scripts/**/*.ts"]
+    },
+    "apps/api": {
+      "entry": [
+        "src/worker.ts",
+        "src/index.ts",
+        "src/env-check.ts",
+        "src/**/*.test.ts",
+        "vitest.config.ts",
+        "test/*.ts"
+      ],
+      "project": ["src/**/*.ts", "test/**/*.ts"]
+    },
+    "apps/web": {
+      "entry": [
+        "src/main.tsx",
+        "src/routes/**/*.tsx",
+        "src/**/*.test.{ts,tsx}",
+        "vite.config.ts",
+        "vitest.config.ts",
+        "test/*.{ts,tsx}"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "test/**/*.{ts,tsx}"]
+    },
+    "packages/*": {
+      "entry": ["src/index.ts", "src/**/*.test.ts", "vitest.config.ts", "drizzle.config.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "tooling/*": {
+      "entry": ["src/index.ts", "src/**/*.test.ts", "vitest.config.ts"],
+      "project": ["src/**/*.ts"]
+    }
+  },
+  "ignoreDependencies": ["@seri/tsconfig", "cloudflare"],
+  "ignore": ["**/*.gen.ts", "**/worker-configuration.d.ts", ".stryker-tmp/**", "**/.stryker-tmp/**"]
+}

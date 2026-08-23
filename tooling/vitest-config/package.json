@@ -1,0 +1,15 @@
+{
+  "name": "@seri/vitest-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@seri/quality-gates": "workspace:*"
+  },
+  "devDependencies": {
+    "@seri/tsconfig": "workspace:*"
+  }
+}
