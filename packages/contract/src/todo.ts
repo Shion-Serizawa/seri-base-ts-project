@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
-/** Todo の識別子。生の string と混同しないよう branded type にしている。 */
+/**
+ * Todo の識別子。生の string と混同しないよう branded type にしている。
+ *
+ * 注意: zod の `.brand()` が型を付けるのは**出力側だけ**で、入力（`z.input`）は生の string のまま。
+ * つまり API 呼び出しの引数には string を渡せる。brand が守るのは「受け取った id を
+ * 他の string と混同すること」であって、呼び出し時の入力ではない。
+ * この非対称性は todo.test-d.ts に型テストとして固定してある。
+ */
 export const todoIdSchema = z.uuid().brand<'TodoId'>();
 export type TodoId = z.infer<typeof todoIdSchema>;
 

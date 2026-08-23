@@ -12,6 +12,7 @@
     "**/coverage/**",
     "**/.stryker-tmp/**",
     "**/*.gen.ts",
-    "**/worker-configuration.d.ts"
+    "**/worker-configuration.d.ts",
+    "**/*.test-d.ts"
   ]
 }
