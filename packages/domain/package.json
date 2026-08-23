@@ -1,0 +1,21 @@
+{
+  "name": "@seri/domain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@seri/contract": "workspace:*"
+  },
+  "devDependencies": {
+    "@seri/tsconfig": "workspace:*",
+    "@seri/vitest-config": "workspace:*"
+  }
+}
