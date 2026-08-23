@@ -1,0 +1,3 @@
+# cp .dev.vars.example .dev.vars して使う（.dev.vars は gitignore 済み）
+# openssl rand -base64 32 などで生成する
+BETTER_AUTH_SECRET=replace-with-a-random-32-byte-secret

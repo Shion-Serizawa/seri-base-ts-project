@@ -1,0 +1,24 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "seri-base-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "vars": {
+    // 認証エンドポイントの絶対 URL。デプロイ先に合わせて上書きする
+    "BETTER_AUTH_URL": "http://localhost:8787",
+  },
+  // BETTER_AUTH_SECRET はここに書かない。
+  //   ローカル: .dev.vars（gitignore 済み）
+  //   本番:     wrangler secret put BETTER_AUTH_SECRET
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "seri-base-db",
+      // `wrangler d1 create seri-base-db` の出力で置き換える
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "../../packages/db/migrations",
+    },
+  ],
+}
