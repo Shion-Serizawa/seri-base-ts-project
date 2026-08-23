@@ -1,0 +1,25 @@
+{
+  "name": "@seri/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply seri-base-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply seri-base-db --remote"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.2"
+  },
+  "devDependencies": {
+    "@seri/tsconfig": "workspace:*",
+    "@seri/vitest-config": "workspace:*"
+  }
+}
