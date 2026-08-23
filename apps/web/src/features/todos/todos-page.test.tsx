@@ -1,13 +1,29 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { jsonResponse, renderWithQuery, stubFetch } from '../../../test/render.tsx';
+import { renderWithQuery } from '../../../test/render.tsx';
 import { TodosPage } from './todos-page.tsx';
+
+/**
+ * oRPC クライアントをテストダブルに差し替える。
+ * ワイヤ形式・契約のバリデーション・D1 アクセスは apps/api 側の統合テストで検証しているので、
+ * ここではコンポーネントの振る舞いだけを見る。
+ */
+const mocks = vi.hoisted(() => ({
+  list: vi.fn<() => Promise<unknown>>(),
+  create: vi.fn<() => Promise<unknown>>(),
+  setDone: vi.fn<() => Promise<unknown>>(),
+  remove: vi.fn<() => Promise<unknown>>(),
+}));
+
+vi.mock('../../lib/api-client.ts', () => ({
+  apiClient: { todo: mocks },
+}));
 
 const validId = '00000000-0000-4000-8000-000000000000';
 
-function todoJson(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+function todo(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: validId,
     title: 'サンプル',
@@ -17,66 +33,61 @@ function todoJson(overrides: Record<string, unknown> = {}): Record<string, unkno
   };
 }
 
+beforeEach(() => {
+  mocks.list.mockResolvedValue([]);
+  mocks.create.mockResolvedValue(todo());
+  mocks.setDone.mockResolvedValue(todo({ done: true }));
+});
+
 describe('TodosPage', () => {
   it('取得した Todo を一覧表示する', async () => {
-    stubFetch({ GET: () => jsonResponse([todoJson({ title: '牛乳を買う' })]) });
+    mocks.list.mockResolvedValue([todo({ title: '牛乳を買う' })]);
     renderWithQuery(<TodosPage />);
 
     expect(await screen.findByText('牛乳を買う')).toBeInTheDocument();
   });
 
   it('取得中は読み込み表示を出す', () => {
-    stubFetch({ GET: () => jsonResponse([]) });
     renderWithQuery(<TodosPage />);
 
     expect(screen.getByText('読み込み中…')).toBeInTheDocument();
   });
 
   it('取得に失敗するとエラーを表示する', async () => {
-    stubFetch({ GET: () => jsonResponse({ message: 'boom' }, 500) });
+    mocks.list.mockRejectedValue(new Error('boom'));
     renderWithQuery(<TodosPage />);
 
     expect(await screen.findByRole('alert')).toBeInTheDocument();
   });
 
-  it('入力して送信すると POST し、一覧を再取得する', async () => {
-    const { calls } = stubFetch({
-      GET: () => jsonResponse([]),
-      POST: () => jsonResponse(todoJson(), 201),
-    });
+  it('入力して送信すると create を呼ぶ', async () => {
     renderWithQuery(<TodosPage />);
 
     await userEvent.type(screen.getByLabelText('やること'), '新しいタスク');
     await userEvent.click(screen.getByRole('button', { name: '追加' }));
 
     await waitFor(() => {
-      expect(calls.some((call) => call.method === 'POST')).toBe(true);
+      expect(mocks.create).toHaveBeenCalledWith({ title: '新しいタスク' }, expect.anything());
     });
-    const posted = calls.find((call) => call.method === 'POST');
-    expect(posted?.body).toContain('新しいタスク');
   });
 
-  it('空白のみの入力では送信しない', async () => {
-    const { calls } = stubFetch({ GET: () => jsonResponse([]) });
+  it('空白のみの入力では create を呼ばない', async () => {
     renderWithQuery(<TodosPage />);
 
     await userEvent.type(screen.getByLabelText('やること'), '   ');
     await userEvent.click(screen.getByRole('button', { name: '追加' }));
 
-    expect(calls.every((call) => call.method === 'GET')).toBe(true);
+    expect(mocks.create).not.toHaveBeenCalled();
   });
 
-  it('チェックボックスを操作すると PATCH する', async () => {
-    const { calls } = stubFetch({
-      GET: () => jsonResponse([todoJson()]),
-      PATCH: () => jsonResponse(todoJson({ done: true })),
-    });
+  it('チェックボックスを操作すると setDone を呼ぶ', async () => {
+    mocks.list.mockResolvedValue([todo()]);
     renderWithQuery(<TodosPage />);
 
     await userEvent.click(await screen.findByRole('checkbox'));
 
     await waitFor(() => {
-      expect(calls.some((call) => call.method === 'PATCH')).toBe(true);
+      expect(mocks.setDone).toHaveBeenCalledWith({ id: validId, done: true }, expect.anything());
     });
   });
 });

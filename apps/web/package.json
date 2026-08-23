@@ -13,17 +13,18 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@seri/api": "workspace:*",
+    "@orpc/client": "1.15.0",
+    "@orpc/tanstack-query": "1.15.0",
     "@seri/contract": "workspace:*",
     "@seri/domain": "workspace:*",
     "@tanstack/react-query": "5.101.4",
     "@tanstack/react-router": "1.170.29",
     "better-auth": "1.6.29",
-    "hono": "4.13.2",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@orpc/contract": "1.15.0",
     "@seri/tsconfig": "workspace:*",
     "@seri/vitest-config": "workspace:*",
     "@tanstack/router-plugin": "1.168.32",

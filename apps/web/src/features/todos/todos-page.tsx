@@ -1,15 +1,31 @@
 import type { Todo } from '@seri/contract';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { JSX, SubmitEvent } from 'react';
 import { useState } from 'react';
 
+import { orpc } from '../../lib/query.ts';
 import { TodoList } from './todo-list.tsx';
-import { useCreateTodo, useToggleTodo, useTodos } from './use-todos.ts';
+
+/**
+ * 一覧の再取得。oRPC の query utils がキーを生成するので、キーを手で組まない。
+ *
+ * カスタムフックで useQuery / useMutation を包み直していないのは、
+ * 戻り値の型が oRPC と TanStack Query の推論に依存しており、
+ * 手書きの型注釈を付けると型を狭めて壊れるため。
+ */
+function useInvalidateTodos(): () => Promise<void> {
+  const queryClient = useQueryClient();
+  return async (): Promise<void> => {
+    await queryClient.invalidateQueries({ queryKey: orpc.todo.list.queryKey() });
+  };
+}
 
 export function TodosPage(): JSX.Element {
   const [title, setTitle] = useState('');
-  const todos = useTodos();
-  const createTodo = useCreateTodo();
-  const toggleTodo = useToggleTodo();
+  const invalidateTodos = useInvalidateTodos();
+  const todos = useQuery(orpc.todo.list.queryOptions());
+  const createTodo = useMutation(orpc.todo.create.mutationOptions({ onSuccess: invalidateTodos }));
+  const toggleTodo = useMutation(orpc.todo.setDone.mutationOptions({ onSuccess: invalidateTodos }));
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();

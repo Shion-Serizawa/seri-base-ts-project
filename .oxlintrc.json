@@ -211,8 +211,7 @@
             "paths": [
               {
                 "name": "@seri/api",
-                "allowTypeImports": true,
-                "message": "web は API を型としてのみ参照できる（実行時 import はバンドルに API 実装を混入させる）"
+                "message": "web は API 実装を参照できない。型は @seri/contract（oRPC の契約）から得る"
               }
             ]
           }

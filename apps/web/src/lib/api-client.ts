@@ -1,10 +1,18 @@
-import type { AppType } from '@seri/api';
-import { hc } from 'hono/client';
+import { createORPCClient } from '@orpc/client';
+import { RPCLink } from '@orpc/client/fetch';
+import type { ContractRouterClient } from '@orpc/contract';
+import type { apiContract } from '@seri/contract';
+
+const apiOrigin = import.meta.env.VITE_API_URL ?? globalThis.location.origin;
+
+const link = new RPCLink({
+  url: `${apiOrigin}/api/rpc`,
+  // 認証 Cookie を送るために必要
+  fetch: async (request, init) => await fetch(request, { ...init, credentials: 'include' }),
+});
 
 /**
- * Hono RPC クライアント。`AppType` は型としてのみ参照するため
- * バンドルに API 実装は含まれない（dependency-cruiser で実行時 import を禁止している）。
+ * oRPC クライアント。型は `@seri/contract` の契約からのみ得ており、
+ * `apps/api` の実装には依存しない（oxlint が実行時・型の両方で import を禁止している）。
  */
-export const api = hc<AppType>(import.meta.env.VITE_API_URL ?? '', {
-  init: { credentials: 'include' },
-});
+export const apiClient: ContractRouterClient<typeof apiContract> = createORPCClient(link);
