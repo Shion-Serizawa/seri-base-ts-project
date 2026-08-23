@@ -36,6 +36,8 @@ export function createCoverageOptions(
     exclude: [
       'src/**/*.test.ts',
       'src/**/*.test.tsx',
+      // 型テストは実行されないので行カバレッジの対象にしない（型検査で担保される）
+      'src/**/*.test-d.ts',
       'src/**/index.ts',
       'src/**/*.gen.ts',
       ...(options.exclude ?? []),
@@ -45,6 +47,8 @@ export function createCoverageOptions(
       functions: QUALITY_GATES.coverage.functions,
       branches: QUALITY_GATES.coverage.branches,
       statements: QUALITY_GATES.coverage.statements,
+      // ファイル単位で要求する（集計だと未テストのファイルが他のコードに隠れる）
+      perFile: QUALITY_GATES.coverage.perFile,
     },
   };
 }
