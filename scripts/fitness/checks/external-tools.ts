@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 
+import { localBin } from '../lib/bin.ts';
 import type { CheckResult } from '../lib/report.ts';
 
 type ToolSpec = {
@@ -30,18 +31,17 @@ function runTool({ name, command, expected }: ToolSpec): CheckResult {
  * 適応度関数 ③ 重複率 / ⑥ デッドコード。
  * ⑦ アーキテクチャ依存制約は oxlint の no-restricted-imports / import/no-cycle 側で
  * 強制している（dependency-cruiser は TypeScript 7 の API 非対応で走査できない）。
- * いずれも「複雑度を下げるための小細工」を牽制する側の指標。
  */
 export function checkExternalTools(): CheckResult[] {
   return [
     runTool({
       name: 'dead code (knip)',
-      command: 'knip --no-config-hints',
+      command: `${localBin('knip')} --no-config-hints`,
       expected: '未使用の export / 依存が無い',
     }),
     runTool({
       name: 'duplication (jscpd)',
-      command: 'jscpd',
+      command: localBin('jscpd'),
       expected: '重複率が閾値以下',
     }),
   ];

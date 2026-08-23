@@ -45,7 +45,8 @@ function walk(directory: string, found: string[]): void {
 
 export function isTestFile(path: string): boolean {
   const normalized = path.split(sep).join('/');
-  return /\.(?:test|spec)\.tsx?$/u.test(normalized) || normalized.includes('/test/');
+  // *.test-d.ts（型テスト）もテストコードとして数える
+  return /\.(?:test|spec)(?:-d)?\.tsx?$/u.test(normalized) || normalized.includes('/test/');
 }
 
 /** 空行と行コメントのみの行を除いた行数を数える。 */
