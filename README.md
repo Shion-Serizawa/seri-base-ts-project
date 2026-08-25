@@ -71,18 +71,25 @@ oxlint / stryker / jscpd の設定ファイル側の数値と食い違ってい�
 指標は「単独でハックすると別の指標が悪化する」ように選んでいる。詳細は
 [docs/adr/0002-fitness-functions.md](docs/adr/0002-fitness-functions.md)。
 
-| #   | 指標                                                | 強制場所               | ハック手段             | 牽制する指標                         |
-| --- | --------------------------------------------------- | ---------------------- | ---------------------- | ------------------------------------ |
-| ①   | カバレッジ 80%（行/分岐/関数/文、**ファイル単位**） | Vitest                 | アサーションなしテスト | ④ + `vitest/expect-expect`           |
-| ②   | test ratio **上限のみ** 2.50                        | `bun run fitness`      | —                      | 「量を増やす」方向への牽制（③ と対） |
-| ③   | 重複率 3% 以下                                      | jscpd                  | 過度な共通化           | ⑤                                    |
-| ④   | ミューテーションスコア 60% 以上                     | CI（変更ファイルのみ） | —                      | ① と対                               |
-| ⑤   | 循環的複雑度 10 / ネスト 3 / 関数 50 行 / 引数 4    | oxlint                 | 無意味な関数分割       | ⑥ ③                                  |
-| ⑥   | 未使用 export・未使用依存ゼロ                       | knip                   | —                      | ⑤                                    |
-| ⑦   | 層をまたぐ依存・循環依存ゼロ                        | oxlint                 | —                      | —                                    |
-| ⑧   | バンドルサイズ（gzip: api 550kB / web 160kB）       | `bun run fitness`      | 依存を足して楽をする   | ⑤                                    |
-| ⑨   | シークレットの混入ゼロ（作業ツリー + git 履歴）     | gitleaks               | —                      | —                                    |
-| ⑩   | スキーマとマイグレーションの乖離ゼロ                | drizzle-kit            | —                      | —                                    |
+| #   | 指標                                                | 強制場所                                     | ハック手段                            | 牽制する指標                         |
+| --- | --------------------------------------------------- | -------------------------------------------- | ------------------------------------- | ------------------------------------ |
+| ①   | カバレッジ 80%（行/分岐/関数/文、**ファイル単位**） | Vitest                                       | アサーションなしテスト                | ④ + `vitest/expect-expect`           |
+| ②   | test ratio **上限のみ** 2.50（ワークスペース単位）  | `bun run fitness`                            | —                                     | 「量を増やす」方向への牽制（③ と対） |
+| ③   | 重複率 3% 以下                                      | jscpd                                        | 過度な共通化                          | ⑤                                    |
+| ④   | ミューテーションスコア 60% 以上                     | CI（PR と main への push、変更ファイルのみ） | —                                     | ① と対                               |
+| ⑤   | 循環的複雑度 10 / ネスト 3 / 関数 50 行 / 引数 4    | oxlint                                       | 無意味な関数分割                      | ⑥ ③                                  |
+| ⑥   | 未使用 export・未使用依存ゼロ                       | knip                                         | **テストを1本足して「使用中」にする** | ⑥′                                   |
+| ⑥′  | 本番の入口から到達しない export ゼロ                | `knip --production`                          | —                                     | ⑥ の抜け道を塞ぐ                     |
+| ⑦   | 層をまたぐ依存・循環依存ゼロ（サブパス込み）        | oxlint                                       | —                                     | —                                    |
+| ⑧   | バンドルサイズ（gzip: api 550kB / web 160kB）       | `bun run fitness`                            | 依存を足して楽をする                  | ⑤                                    |
+| ⑨   | シークレットの混入ゼロ（作業ツリー + git 履歴）     | gitleaks                                     | —                                     | —                                    |
+| ⑩   | スキーマとマイグレーションの乖離ゼロ                | drizzle-kit                                  | —                                     | —                                    |
+| ⑪   | **Lint 設定そのものの改ざんゼロ**                   | `tooling/quality-gates` のテスト             | ゲートに詰まったら設定を緩める        | ⑪ が全指標を守る                     |
+
+⑪ は他のすべての指標の前提です。カテゴリの severity、error にしているルールの集合、
+off にしているルールの集合、override で無効化しているルールを
+`tooling/quality-gates/src/lint-policy.ts` のポリシーと突き合わせ、
+**`"correctness": "off"` や `"vitest/expect-expect": "off"` のような改ざんを検出**します。
 
 **test ratio に下限を置いていないのは意図的です。** 下限は `it.each` のようなテーブル駆動化
 （テスト行数が減ってカバレッジとミューテーションスコアは上がる書き方）を罰してしまい、
@@ -98,6 +105,38 @@ oxlint / stryker / jscpd の設定ファイル側の数値と食い違ってい�
 
 `any` の混入は「割合」ではなく **error** で禁止している（`typescript/no-unsafe-*`、
 `no-explicit-any`、`no-unsafe-type-assertion`、`ban-ts-comment`）。
+
+## フォーマッタ
+
+**oxfmt**（`.oxfmtrc.json`）を使っています。oxlint と同じ oxc ベースなので二重管理になりません。
+
+- 設定は**すべて明示**しています（`printWidth` / `singleQuote` / `trailingComma` / `endOfLine: "lf"` など）。
+  oxfmt は 0.x なので既定値が変わる可能性があり、暗黙の既定値に依存すると
+  バージョン更新で差分が発生するためです。依存は完全固定なので更新は意図的な操作になります
+- `sortImports` と `sortPackageJson` を有効にしています。import 順が決定的になるので、
+  AI が生成した差分がレビューしやすくなります。import 順の lint ルール（`sort-imports`）は
+  フォーマッタと二重管理になるため無効にしています
+- 対象は `.ts` / `.tsx` / `.js` / `.mjs` / `.json` / `.jsonc` / `.md`
+- 強制場所: pre-commit（差分のみ・`stage_fixed: true` で自動修正を staging に戻す）と
+  CI の `bun run format:check`
+- エディタ: `.vscode/settings.json` で保存時フォーマットを oxc に向けています
+
+```bash
+bun run format        # 書き換える
+bun run format:check  # 差分があれば失敗する（CI と同じ）
+```
+
+## セキュリティ
+
+参照実装（Todo）は**認可込み**です。詳細は
+[docs/adr/0005-authorization-and-cors.md](docs/adr/0005-authorization-and-cors.md)。
+
+- `todos` は `userId` を必須で持ち、リポジトリ層のクエリはすべてセッションのユーザーでスコープする
+- 認証ミドルウェアを通さない手続きは `context.userId` を持たないため**コンパイルできない**
+- 他人のリソースへの操作は存在を漏らさないため `NOT_FOUND` を返す
+- CORS はオリジンを反射せず、`ALLOWED_ORIGINS`（バインディング）の許可リストで判定する
+
+新しい手続きを足すときは `os`（認証済みビルダー）から実装してください。
 
 ## Git フック
 
@@ -135,4 +174,7 @@ bun add <pkg> --minimum-release-age=0
 - E2E（Playwright）: 現在ルーティングの結線（`apps/web/src/routes/**`）だけがテスト対象外
 - AI Coding 向けの環境整備（CLAUDE.md、スキル、MCP など）
 - 認証 UI（サインイン・サインアップ画面）。API と認証クライアントの結線までは完了している
+- `scripts/` のテスト（実装 617 行に対してテスト 0 行）。適応度関数の実装自体が未テストで、
+  実際にここのバグで 2 件のゲートが機能していなかった。`bun run fitness` の
+  ワークスペース別表示で可視化されている
 - OpenAPI ドキュメント生成（`@orpc/openapi` を足せば可能）

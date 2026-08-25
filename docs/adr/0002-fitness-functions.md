@@ -116,6 +116,83 @@ LOC 比では検出できなかった種類の穴である。
 string を渡せる。branded type が守っているのは「受け取った id を他の string と混同すること」
 であって、呼び出し時の入力ではない。この非対称性は型テストに固定してある。
 
+## レビューで判明した穴と対応（2026-08-25）
+
+第三者によるレビューで、実際に設定を改ざんして検証した結果いくつかの穴が判明した。
+
+### 1. 「設定だけ緩める抜け道を塞ぐ」が複雑度の 7 つの数値にしか効いていなかった
+
+最も強く主張していた防御が、実際には `complexity` / `max-depth` / `max-params` /
+`max-statements` / `max-nested-callbacks` / `max-lines-per-function` / `max-lines` の
+**数値 7 つしか見ていなかった**。以下の改ざんはテストを 1 つも落とさなかった。
+
+```
+"correctness": "error"       → "off"   （バグ検出カテゴリ丸ごと）
+"typescript/no-explicit-any" → "off"
+"vitest/expect-expect"       → "off"   （カバレッジ水増しの唯一の門番）
+```
+
+ゲートに詰まったときの最短の修復手段がそのまま通る状態だった。
+
+対応: `tooling/quality-gates/src/lint-policy.ts` に Lint 設定のポリシーを宣言し、
+`lint-policy.test.ts` が `.oxlintrc.json` との一致を検証する。
+
+- `categories` は完全一致
+- `error` にしているルールの集合が完全一致（消しても off にしても落ちる）
+- `off` にしているルールの集合が完全一致（新しい off を勝手に増やせない）
+- `warn` の使用を禁止（AI は warn を無視して進むため）
+- `overrides` で off にできるルールを allowlist で制限（`typescript/no-unsafe-*` を
+  ディレクトリ単位で黙らせる抜け道を塞ぐ）
+
+上の 3 つの改ざんを再現し、3 件のテストが落ちることを確認した。
+
+### 2. 層の境界がサブパス import で素通りしていた
+
+`no-restricted-imports` を `paths`（完全一致）で書いていたため、`@seri/db` は止まっても
+`@seri/db/schema` は通っていた（`@seri/db` は実際に `./schema` を exports している）。
+また `apps/web` の制限リストには `@seri/api` しかなく、web → db は無防備だった。
+
+対応: `patterns`（glob + `!` による許可）に変更し、各層を
+「許可する依存先の allowlist」として書き直した。`@seri/db/schema` と
+web からの `@seri/db` の両方がブロックされることを確認した。
+
+### 3. デッドコード指標がテスト 1 本で無力化できた
+
+`knip.json` の `entry` にテストファイルを入れていたため、テストから参照された export は
+「使用中」扱いになっていた。**⑥ を無力化する行為が同時に ① カバレッジと
+② test ratio を改善する**という、牽制構造が逆向きに働く唯一の箇所だった。
+
+対応: 本番の入口を `!` サフィックスで明示し、`knip --production` を別ゲートとして追加した。
+導入直後に「テストからしか使われていない export」を 5 件検出した
+（`apps/api/src/index.ts` 全体、`RPC_PREFIX`、`apiOrigin`、`authClient`、
+`todoContract`、`TODO_TITLE_MAX_LENGTH`）。いずれも削除または非公開にした。
+
+### 4. バンドルサイズが未ビルドだと緑になっていた（false green）
+
+`dist` が無いとき `ok: true` を返していた。pre-push は build を回さないため、
+クローン直後や dist 削除後は常に PASS 表示だった。「計測できなかった」が緑で出るのは
+最も危険な表示なので、**計測不能を失敗として扱う**ようにし、
+pre-push に build を追加した（turbo のキャッシュが効くので差分が無ければ数百ミリ秒）。
+
+### 5. test ratio が全体の 1 つの数値だった
+
+どこが厚い／薄いのかが分からず、AI にフィードバックできなかった。
+ワークスペース単位で算出・表示し、判定も各ワークスペースに対して行うようにした。
+
+### 6. ミューテーションが PR のみだった
+
+`if: github.event_name == 'pull_request'` だったため、main への直 push では ④ が走らず
+① の牽制が外れていた。push でも走るようにし、差分の基準を
+PR ならベースブランチ、push なら `HEAD~1` に切り替えるようにした。
+
+### 対応しなかったもの
+
+- **`scripts/` に対するテストが無い**（実装 617 行に対してテスト 0 行）。
+  上記 4 と 5 の不具合はどちらも未テストのスクリプトコードのバグだった。
+  ワークスペース単位の表示で可視化されたので、次の作業対象とする
+- **`apps/web/src/routes/**` が無防備**（テスト無し・カバレッジ除外・E2E 無し）。
+  E2E を入れる段階でまとめて対応する
+
 ## 運用
 
 `bun run fitness` が 8 件をまとめて計測し、表で結果を出す。
