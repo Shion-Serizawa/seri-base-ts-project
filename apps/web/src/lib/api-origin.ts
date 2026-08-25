@@ -1,19 +1,20 @@
+import { AUTH_ENDPOINT, RPC_ENDPOINT } from '@seri/contract/endpoints';
+
 /**
  * API のオリジン。`VITE_API_URL` が未設定なら同一オリジンを使う。
  *
- * oRPC クライアントと better-auth クライアントの両方が必要とするため、
- * ここに 1 箇所だけ置く（重複させると分岐のテストも二重になる）。
+ * パスは `@seri/contract` の定数を使う（サーバのマウント先と同じ情報源）。
  */
-export function apiOrigin(): string {
+function apiOrigin(): string {
   return import.meta.env.VITE_API_URL ?? globalThis.location.origin;
 }
 
 /** oRPC のエンドポイント URL。 */
 export function rpcUrl(): string {
-  return `${apiOrigin()}/api/rpc`;
+  return `${apiOrigin()}${RPC_ENDPOINT}`;
 }
 
 /** better-auth のエンドポイント URL。 */
 export function authUrl(): string {
-  return `${apiOrigin()}/api/auth`;
+  return `${apiOrigin()}${AUTH_ENDPOINT}`;
 }
