@@ -90,3 +90,11 @@ export const QUALITY_GATES = {
 } as const;
 
 export type QualityGates = typeof QUALITY_GATES;
+
+export {
+  ALLOWED_OFF_RULES,
+  ALLOWED_OVERRIDE_OFF_RULES,
+  LINT_CATEGORIES,
+  LINT_PLUGINS,
+  REQUIRED_ERROR_RULES,
+} from './lint-policy.ts';

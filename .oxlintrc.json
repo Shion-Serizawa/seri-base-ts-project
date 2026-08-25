@@ -148,26 +148,23 @@
     {
       // -------------------------------------------------------------------
       // アーキテクチャ境界（適応度関数 ⑦）
+      //
       // dependency-cruiser は TypeScript 7 の API 非対応で走査できないため、
       // 層の依存方向は oxlint の no-restricted-imports で表現する。
       // 循環依存は import/no-cycle が全体に対して禁止している。
+      //
+      // `paths`（完全一致）ではなく `patterns`（glob）を使う。完全一致では
+      // `@seri/db` は止まっても `@seri/db/schema` のようなサブパス import が素通りするため。
+      // 各層は「許可する依存先の allowlist」として書く（`!` が許可）。
       // -------------------------------------------------------------------
       "files": ["packages/contract/src/**"],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
-            "paths": [
+            "patterns": [
               {
-                "name": "@seri/db",
-                "message": "contract は最下層。他のワークスペースに依存できない"
-              },
-              {
-                "name": "@seri/domain",
-                "message": "contract は最下層。他のワークスペースに依存できない"
-              },
-              {
-                "name": "@seri/api",
+                "group": ["@seri/*", "@seri/*/**"],
                 "message": "contract は最下層。他のワークスペースに依存できない"
               }
             ]
@@ -181,9 +178,11 @@
         "no-restricted-imports": [
           "error",
           {
-            "paths": [
-              { "name": "@seri/db", "message": "domain は純粋なロジック。DB に依存できない" },
-              { "name": "@seri/api", "message": "domain は純粋なロジック。アプリに依存できない" }
+            "patterns": [
+              {
+                "group": ["@seri/*", "@seri/*/**", "!@seri/contract", "!@seri/contract/**"],
+                "message": "domain が依存できるのは @seri/contract だけ（純粋なロジックの層）"
+              }
             ]
           }
         ],
@@ -215,9 +214,11 @@
         "no-restricted-imports": [
           "error",
           {
-            "paths": [
-              { "name": "@seri/domain", "message": "db はスキーマ層。domain に依存できない" },
-              { "name": "@seri/api", "message": "db はスキーマ層。アプリに依存できない" }
+            "patterns": [
+              {
+                "group": ["@seri/*", "@seri/*/**", "!@seri/contract", "!@seri/contract/**"],
+                "message": "db が依存できるのは @seri/contract だけ（スキーマの層）"
+              }
             ]
           }
         ]
@@ -228,7 +229,23 @@
       "rules": {
         "no-restricted-imports": [
           "error",
-          { "paths": [{ "name": "@seri/web", "message": "API はフロントエンドに依存できない" }] }
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@seri/*",
+                  "@seri/*/**",
+                  "!@seri/contract",
+                  "!@seri/contract/**",
+                  "!@seri/db",
+                  "!@seri/db/**",
+                  "!@seri/domain",
+                  "!@seri/domain/**"
+                ],
+                "message": "api が依存できるのは contract / db / domain だけ（web には依存できない）"
+              }
+            ]
+          }
         ]
       }
     },
@@ -238,10 +255,17 @@
         "no-restricted-imports": [
           "error",
           {
-            "paths": [
+            "patterns": [
               {
-                "name": "@seri/api",
-                "message": "web は API 実装を参照できない。型は @seri/contract（oRPC の契約）から得る"
+                "group": [
+                  "@seri/*",
+                  "@seri/*/**",
+                  "!@seri/contract",
+                  "!@seri/contract/**",
+                  "!@seri/domain",
+                  "!@seri/domain/**"
+                ],
+                "message": "web が依存できるのは contract / domain だけ。API の型は契約から得る（@seri/api と @seri/db は実行時も型も禁止）"
               }
             ]
           }
