@@ -81,7 +81,7 @@ jobs:
 
   mutation:
     name: mutation score (changed files)
-    if: github.event_name == 'pull_request'
+    # PR だけにすると「main へ直 push」が最短経路になり、④ の牽制が外れる
     needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -103,5 +103,6 @@ jobs:
       # 変更された実装ファイルだけを対象にする（全体だと時間がかかりすぎる）
       - name: mutation testing
         env:
-          MUTATION_BASE_REF: origin/${{ github.base_ref }}
+          # PR はベースブランチとの差分、push は直前のコミットとの差分を対象にする
+          MUTATION_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD~1' }}
         run: bun run mutation

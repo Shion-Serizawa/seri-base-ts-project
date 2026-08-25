@@ -46,12 +46,14 @@ function formatBytes(bytes: number): string {
 function checkOne(name: string, directory: string, budget: number): CheckResult {
   const bytes = totalGzipBytes(directory);
   if (bytes === NOT_BUILT) {
+    // 「計測できなかった」を PASS にすると、クローン直後や dist 削除後に
+    // このゲートが常に緑になる（false green）。計測不能は失敗として扱う。
     return {
       name,
-      ok: true,
-      actual: '未ビルド',
+      ok: false,
+      actual: '未ビルド（計測不能）',
       expected: `<= ${formatBytes(budget)}`,
-      details: [`${directory} が無いためスキップ（bun run build 後に再実行）`],
+      details: [`${directory} が存在しない。\`bun run build\` を実行してから計測する`],
     };
   }
   return {

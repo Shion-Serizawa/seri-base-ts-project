@@ -39,6 +39,15 @@ export function checkExternalTools(): CheckResult[] {
       command: `${localBin('knip')} --no-config-hints`,
       expected: '未使用の export / 依存が無い',
     }),
+    // テストからしか使われていない実装コードを検出する。
+    // 通常モードはテストファイルもエントリなので、「テストを1本足せば
+    // デッドコード判定を回避できる」という抜け道がある。
+    // production モードは `!` を付けたエントリ（本番の入口）だけから到達性を見る。
+    runTool({
+      name: 'dead code (production)',
+      command: `${localBin('knip')} --production --no-config-hints`,
+      expected: '本番から到達しない export が無い',
+    }),
     runTool({
       name: 'duplication (jscpd)',
       command: localBin('jscpd'),

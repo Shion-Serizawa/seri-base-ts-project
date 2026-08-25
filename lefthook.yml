@@ -48,5 +48,10 @@ pre-push:
     - name: test with coverage
       run: node_modules/.bin/turbo run test:coverage
 
+    # 適応度関数のバンドルサイズ検査は dist を見るため、先にビルドする
+    # （turbo のキャッシュが効くので差分が無ければ数百ミリ秒）
+    - name: build
+      run: node_modules/.bin/turbo run build
+
     - name: fitness functions
       run: node scripts/fitness/run.ts
