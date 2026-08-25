@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createTodoInputSchema,
-  TODO_TITLE_MAX_LENGTH,
-  todoIdSchema,
-  todoSchema,
-  updateTodoInputSchema,
-} from './todo.ts';
+import { createTodoInputSchema, todoIdSchema, todoSchema, updateTodoInputSchema } from './todo.ts';
+
+// 定数を import せず値を直接書く。定数を共有すると「上限は上限である」という同語反復になる
+const TITLE_MAX_LENGTH = 200;
 
 const validId = '00000000-0000-4000-8000-000000000000';
 
@@ -47,12 +44,12 @@ describe('todoSchema', () => {
 
 describe('createTodoInputSchema', () => {
   it('上限ちょうどの長さを受け付ける', () => {
-    const title = 'あ'.repeat(TODO_TITLE_MAX_LENGTH);
-    expect(createTodoInputSchema.parse({ title }).title).toHaveLength(TODO_TITLE_MAX_LENGTH);
+    const title = 'あ'.repeat(TITLE_MAX_LENGTH);
+    expect(createTodoInputSchema.parse({ title }).title).toHaveLength(TITLE_MAX_LENGTH);
   });
 
   it('上限を 1 文字超えると拒否する', () => {
-    const title = 'あ'.repeat(TODO_TITLE_MAX_LENGTH + 1);
+    const title = 'あ'.repeat(TITLE_MAX_LENGTH + 1);
     expect(createTodoInputSchema.safeParse({ title }).success).toBe(false);
   });
 

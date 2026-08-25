@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { apiContract, todoContract } from './todo-contract.ts';
+import { apiContract } from './todo-contract.ts';
 
 /**
  * 契約の「面」を固定するテスト。
@@ -13,6 +13,6 @@ describe('apiContract', () => {
   });
 
   it('todo の手続き一覧が変わっていない', () => {
-    expect(Object.keys(todoContract)).toStrictEqual(['list', 'create', 'setDone', 'remove']);
+    expect(Object.keys(apiContract.todo)).toStrictEqual(['list', 'create', 'setDone', 'remove']);
   });
 });

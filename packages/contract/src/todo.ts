@@ -11,7 +11,8 @@ import { z } from 'zod';
 export const todoIdSchema = z.uuid().brand<'TodoId'>();
 export type TodoId = z.infer<typeof todoIdSchema>;
 
-export const TODO_TITLE_MAX_LENGTH = 200;
+// テストからは値（200）を直接書いて検証する。定数を共有すると検証が同語反復になる
+const TODO_TITLE_MAX_LENGTH = 200;
 
 export const todoSchema = z.object({
   id: todoIdSchema,
