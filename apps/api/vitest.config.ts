@@ -20,6 +20,7 @@ export default defineConfig({
           TEST_MIGRATIONS: migrations,
           BETTER_AUTH_SECRET: 'test-secret-value-for-integration-tests',
           BETTER_AUTH_URL: 'http://localhost:8787',
+          ALLOWED_ORIGINS: 'http://localhost:5173',
         },
       },
     }),

@@ -1,3 +1,4 @@
+import { AUTH_ENDPOINT } from '@seri/contract/endpoints';
 import { env } from 'cloudflare:workers';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -33,22 +34,22 @@ beforeEach(async () => {
 
 describe('better-auth の email + password', () => {
   it('サインアップに成功しセッション Cookie を返す', async () => {
-    const res = await post('/api/auth/sign-up/email', credentials);
+    const res = await post(`${AUTH_ENDPOINT}/sign-up/email`, credentials);
 
     expect(res.status).toBe(200);
     expect(res.headers.get('set-cookie')).toContain('session_token');
   });
 
   it('同じメールアドレスで二重登録できない', async () => {
-    await post('/api/auth/sign-up/email', credentials);
-    const res = await post('/api/auth/sign-up/email', credentials);
+    await post(`${AUTH_ENDPOINT}/sign-up/email`, credentials);
+    const res = await post(`${AUTH_ENDPOINT}/sign-up/email`, credentials);
 
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 
   it('サインアップしたユーザーでサインインできる', async () => {
-    await post('/api/auth/sign-up/email', credentials);
-    const res = await post('/api/auth/sign-in/email', {
+    await post(`${AUTH_ENDPOINT}/sign-up/email`, credentials);
+    const res = await post(`${AUTH_ENDPOINT}/sign-in/email`, {
       email: credentials.email,
       password: credentials.password,
     });
@@ -57,8 +58,8 @@ describe('better-auth の email + password', () => {
   });
 
   it('誤ったパスワードではサインインできない', async () => {
-    await post('/api/auth/sign-up/email', credentials);
-    const res = await post('/api/auth/sign-in/email', {
+    await post(`${AUTH_ENDPOINT}/sign-up/email`, credentials);
+    const res = await post(`${AUTH_ENDPOINT}/sign-in/email`, {
       email: credentials.email,
       password: 'wrong-password',
     });
@@ -67,10 +68,10 @@ describe('better-auth の email + password', () => {
   });
 
   it('Cookie を渡すとセッションを取得できる', async () => {
-    const signUp = await post('/api/auth/sign-up/email', credentials);
+    const signUp = await post(`${AUTH_ENDPOINT}/sign-up/email`, credentials);
     const cookie = requireSetCookie(signUp);
 
-    const res = await app.request('/api/auth/get-session', { headers: { cookie } }, env);
+    const res = await app.request(`${AUTH_ENDPOINT}/get-session`, { headers: { cookie } }, env);
     const body = await res.text();
 
     expect(res.status).toBe(200);
@@ -78,7 +79,7 @@ describe('better-auth の email + password', () => {
   });
 
   it('Cookie が無ければセッションは空になる', async () => {
-    const res = await app.request('/api/auth/get-session', {}, env);
+    const res = await app.request(`${AUTH_ENDPOINT}/get-session`, {}, env);
 
     expect(res.status).toBe(200);
     expect(await res.text()).not.toContain(credentials.email);
