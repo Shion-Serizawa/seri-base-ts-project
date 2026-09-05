@@ -9,6 +9,6 @@ import { resolve } from 'node:path';
  *   コマンド名として解釈できないため
  * - クォートするのは、リポジトリのパスに空白が含まれていても動くようにするため
  */
-export function localBin(name: string): string {
-  return `"${resolve('node_modules', '.bin', name)}"`;
+export function localBin(root: string, name: string): string {
+  return `"${resolve(root, 'node_modules', '.bin', name)}"`;
 }
