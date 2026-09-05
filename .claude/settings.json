@@ -9,10 +9,14 @@
       "Bash(bun run knip)",
       "Bash(bun run lint)",
       "Bash(bun run lint:quick)",
+      "Bash(bun run jscpd)",
+      "Bash(bun run mutation)",
       "Bash(bun run openapi:generate)",
       "Bash(bun run test)",
       "Bash(bun run test:coverage)",
       "Bash(bun run test:scripts)",
+      "Bash(bun run test:scripts:coverage)",
+      "Bash(bun run --filter @seri/db db:generate)",
       "Bash(bun run typecheck)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
@@ -28,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/hooks/post-edit.ts",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/post-edit.ts\"",
             "timeout": 10
           }
         ]
@@ -39,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/hooks/require-commit.ts",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/require-commit.ts\"",
             "timeout": 15
           }
         ]

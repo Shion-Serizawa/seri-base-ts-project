@@ -26,6 +26,14 @@ describe('changedFiles', () => {
     expect(run.calls).toHaveLength(2);
   });
 
+  it('シェルを解釈しうる ref 名は使わず、作業ツリーの差分に落とす', () => {
+    const run = stubRun(() => ({ status: 0, stdout: 'apps/web/src/b.tsx' }));
+
+    changedFiles(run, 'feat/$(id)');
+
+    expect(run.calls).toStrictEqual(['git diff --name-only HEAD']);
+  });
+
   it('空行を落とす', () => {
     const run = stubRun(() => ({ status: 0, stdout: 'a.ts\n\n  \nb.ts\n' }));
 

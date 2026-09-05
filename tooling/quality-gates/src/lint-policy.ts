@@ -196,3 +196,39 @@ export const ALLOWED_OVERRIDE_OFF_RULES = [
   'typescript/no-non-null-assertion',
   'unicorn/filename-case',
 ] as const;
+
+/**
+ * `ignorePatterns` に書いてよいパターン。完全一致で検証する。
+ *
+ * 適用範囲を固定しないと、新しいルールで大量にエラーが出たときに
+ * `"apps/web/src/**"` を 1 行足すだけでエラーが消え、severity を見ている
+ * 他のアサーションは全部緑のまま通る。severity の改ざんと同じ抜け道なので、
+ * 除外先そのものをポリシーとして固定する。
+ */
+export const LINT_IGNORE_PATTERNS = [
+  '**/dist/**',
+  '**/coverage/**',
+  '**/reports/**',
+  '**/.wrangler/**',
+  '**/.turbo/**',
+  '**/.stryker-tmp/**',
+  '**/node_modules/**',
+  '**/*.gen.ts',
+  '**/routeTree.gen.ts',
+  '**/worker-configuration.d.ts',
+] as const;
+
+/**
+ * `overrides[].files` としてリポジトリ全体を覆うパターン。
+ *
+ * 全体スコープの override で `off` を許すと、`ALLOWED_OVERRIDE_OFF_RULES` に
+ * 載っているルールをリポジトリ全域で黙らせられる（ディレクトリ単位の例外という
+ * 建前が成立しなくなる）。
+ */
+export const REPOSITORY_WIDE_FILE_PATTERNS = [
+  '**/*',
+  '**/*.ts',
+  '**/*.tsx',
+  '**/*.{ts,tsx}',
+  '*',
+] as const;

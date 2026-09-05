@@ -86,7 +86,9 @@ describe('checkTestRatio', () => {
   });
 
   it('計測対象外のディレクトリは数えない', () => {
-    const details = detailsOf(checkOf({ ...workspaceOf(10, 10), 'docs/example.ts': 'const a = 1;\n' }));
+    const details = detailsOf(
+      checkOf({ ...workspaceOf(10, 10), 'docs/example.ts': 'const a = 1;\n' }),
+    );
 
     expect(details.some((line) => line.startsWith('docs'))).toBe(false);
   });

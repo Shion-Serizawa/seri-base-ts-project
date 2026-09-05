@@ -23,7 +23,12 @@ function lintSource(source: string): { status: number | null; output: string } {
     { cwd: root, encoding: 'utf8', timeout: 20_000 },
   );
   expect(result.error).toBeUndefined();
-  return { status: result.status, output: result.stdout + result.stderr };
+  const output = result.stdout + result.stderr;
+  // `--type-aware` のルールは tsgolint が解決できないと 1 件も評価されない。
+  // その状態でも「exit 1 かつ出力にルール名を含む」判定は偶然通りうるので、
+  // バイルアウトそのものを失敗として明示する（真因が読めない false green を防ぐ）。
+  expect(output).not.toMatch(/tsgolint/iu);
+  return { status: result.status, output };
 }
 
 describe('実際の Linter が品質違反を拒否する', () => {
