@@ -32,12 +32,12 @@ lint や型で落ちるものばかりだが、落ちてから直すと手戻り
 
 ## 変更したら走らせるもの
 
-| 変えたもの | 走らせるもの |
-| --- | --- |
-| `packages/contract` の契約 | `bun run openapi:generate`（`docs/openapi.json` もコミット。忘れると ⑫ が FAIL） |
-| `packages/db/src/schema.ts` | `bun run --filter @seri/db db:generate`（忘れると ⑩ が FAIL） |
-| push する前 | `bun run fitness`（pre-push でも走るが、詰まる前に手で回す） |
-| `scripts/` を触った | `bun run test:scripts` |
+| 変えたもの                  | 走らせるもの                                                                     |
+| --------------------------- | -------------------------------------------------------------------------------- |
+| `packages/contract` の契約  | `bun run openapi:generate`（`docs/openapi.json` もコミット。忘れると ⑫ が FAIL） |
+| `packages/db/src/schema.ts` | `bun run --filter @seri/db db:generate`（忘れると ⑩ が FAIL）                    |
+| push する前                 | `bun run fitness`（pre-push でも走るが、詰まる前に手で回す）                     |
+| `scripts/` を触った         | `bun run test:scripts`                                                           |
 
 主要な変更のあとは `bun run lint`（型情報つき）と `bun run typecheck` も通す。
 
@@ -70,5 +70,6 @@ lint や型で落ちるものばかりだが、落ちてから直すと手戻り
 - [docs/adr/0004-orpc-contract-first.md](docs/adr/0004-orpc-contract-first.md) — oRPC contract-first
 - [docs/adr/0005-authorization-and-cors.md](docs/adr/0005-authorization-and-cors.md) — 認可と CORS
 - [docs/adr/0006-openapi-generation.md](docs/adr/0006-openapi-generation.md) — OpenAPI の生成と乖離ゲート
+- [docs/adr/0007-ai-coding-context.md](docs/adr/0007-ai-coding-context.md) — この文書とスキルを置いた理由、入れなかったもの
 
 未着手（意図的に後回し）にしているものは README の「未着手」節にある。着手する前に読むこと。
