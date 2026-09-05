@@ -180,14 +180,16 @@ describe('actions pinning', () => {
     expect(resultsOf(root).get('actions pinning')?.ok).toBe(true);
   });
 
-  it('ワークフローが無ければ PASS にする', () => {
+  it('ワークフローが無ければ FAIL にする（消せば緑になるのを防ぐ）', () => {
     const root = makeTempRepo({
       'package.json': '{}',
       'bunfig.toml': GOOD_BUNFIG,
       'bun.lock': '',
       'mise.lock': '',
     });
+    const result = resultsOf(root).get('actions pinning');
 
-    expect(resultsOf(root).get('actions pinning')?.actual).toBe('ワークフロー無し');
+    expect(result?.ok).toBe(false);
+    expect(result?.actual).toBe('ワークフロー無し（計測不能）');
   });
 });

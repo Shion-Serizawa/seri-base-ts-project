@@ -142,11 +142,15 @@ function isPinned(action: string): boolean {
 function checkActionPinning(root: string): CheckResult {
   const directory = join(root, '.github', 'workflows');
   if (!existsSync(directory)) {
+    // 「検査対象が無いので違反も無い」を PASS にすると、ワークフローを消すか
+    // リネームした瞬間にこのゲートが常に緑になる（false green）。CI はこの
+    // リポジトリの前提なので、無いこと自体を失敗として扱う。
     return {
       name: 'actions pinning',
-      ok: true,
-      actual: 'ワークフロー無し',
+      ok: false,
+      actual: 'ワークフロー無し（計測不能）',
       expected: 'uses: は 40 桁の SHA',
+      details: [`${directory} が存在しない`],
     };
   }
 

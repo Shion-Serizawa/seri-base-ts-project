@@ -42,10 +42,13 @@ function totalGzipBytes(directory: string): number {
   if (!existsSync(directory)) {
     return NOT_BUILT;
   }
-  return listJsFiles(directory).reduce(
-    (total, file) => total + gzipSync(readFileSync(file)).length,
-    0,
-  );
+  const files = listJsFiles(directory);
+  // ディレクトリはあるが JS が 1 本も無い場合も計測不能。合計 0 バイトを
+  // 「予算内」と読むと、ビルド失敗や出力レイアウトの変更で常に緑になる。
+  if (files.length === 0) {
+    return NOT_BUILT;
+  }
+  return files.reduce((total, file) => total + gzipSync(readFileSync(file)).length, 0);
 }
 
 function formatBytes(bytes: number): string {
@@ -62,7 +65,9 @@ function checkOne(name: string, directory: string, budget: number): CheckResult 
       ok: false,
       actual: '未ビルド（計測不能）',
       expected: `<= ${formatBytes(budget)}`,
-      details: [`${directory} が存在しない。\`bun run build\` を実行してから計測する`],
+      details: [
+        `${directory} が存在しないか、計測対象の JS が 1 本も無い。\`bun run build\` を実行してから計測する`,
+      ],
     };
   }
   return {

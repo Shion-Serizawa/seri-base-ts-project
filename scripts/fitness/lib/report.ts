@@ -14,6 +14,14 @@ const DIM = '\u001B[2m';
 const RESET = '\u001B[0m';
 
 export function printReport(results: readonly CheckResult[]): boolean {
+  // 検査 0 件を成功にすると、収集側が壊れた瞬間に `bun run fitness` が
+  // 「すべて満たしています (0 件)」で終了コード 0 になる（false green）。
+  if (results.length === 0) {
+    console.log('');
+    console.log(`${RED}適応度関数が 1 件も収集できませんでした${RESET}`);
+    return false;
+  }
+
   const nameWidth = Math.max(...results.map((result) => result.name.length), 4);
   const actualWidth = Math.max(...results.map((result) => result.actual.length), 6);
 

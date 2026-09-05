@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, sep } from 'node:path';
+import { join } from 'node:path';
 
 const IGNORED_DIRECTORIES = new Set([
   'node_modules',
@@ -44,7 +44,9 @@ function walk(directory: string, found: string[]): void {
 }
 
 export function isTestFile(path: string): boolean {
-  const normalized = path.split(sep).join('/');
+  // OS 非依存に正規化する。`sep` で分割すると POSIX では `\` が残り、
+  // Windows で作られたパスを渡したときだけ判定が変わる（環境依存のゲートになる）。
+  const normalized = path.replaceAll('\\', '/');
   // *.test-d.ts（型テスト）もテストコードとして数える
   return /\.(?:test|spec)(?:-d)?\.tsx?$/u.test(normalized) || normalized.includes('/test/');
 }

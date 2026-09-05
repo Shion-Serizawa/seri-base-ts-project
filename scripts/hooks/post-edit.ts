@@ -10,5 +10,5 @@ const advice = adviceFor(parseEditedPaths(await new Response(process.stdin).text
 
 if (advice.length > 0) {
   console.error(formatAdvice(advice));
-  process.exit(2);
+  process.exitCode = 2;
 }
