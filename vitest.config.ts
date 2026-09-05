@@ -21,6 +21,7 @@ export default defineConfig(
       'scripts/mutation/run-changed.ts',
       'scripts/openapi/write-spec.ts',
       'scripts/hooks/require-commit.ts',
+      'scripts/hooks/post-edit.ts',
       // テスト専用のフィクスチャヘルパ
       'scripts/test/**',
     ],
