@@ -3,6 +3,8 @@ import { join } from 'node:path';
 
 import { QUALITY_GATES } from '@seri/quality-gates';
 
+import type { FitnessContext } from '../lib/context.ts';
+import { defaultContext } from '../lib/context.ts';
 import type { CheckResult } from '../lib/report.ts';
 
 const MANIFEST_DIRECTORIES = ['apps', 'packages', 'tooling'];
@@ -16,9 +18,11 @@ const EXACT_VERSION = /^\d+\.\d+\.\d+(?:-[\w.]+)?$/u;
 const COMMIT_SHA = /^[\da-f]{40}$/u;
 const MAX_DETAILS = 10;
 
-function listManifests(): string[] {
-  const manifests = ['package.json'];
-  for (const directory of MANIFEST_DIRECTORIES.filter((path) => existsSync(path))) {
+function listManifests(root: string): string[] {
+  const manifests = [join(root, 'package.json')];
+  for (const directory of MANIFEST_DIRECTORIES.map((path) => join(root, path)).filter((path) =>
+    existsSync(path),
+  )) {
     for (const entry of readdirSync(directory)) {
       const manifest = join(directory, entry, 'package.json');
       if (existsSync(manifest)) {
@@ -58,8 +62,8 @@ function collectRangeViolations(manifest: string): string[] {
 }
 
 /** 依存が完全固定（レンジ禁止）であることを検証する。 */
-function checkExactVersions(): CheckResult {
-  const violations = listManifests().flatMap((manifest) => collectRangeViolations(manifest));
+function checkExactVersions(root: string): CheckResult {
+  const violations = listManifests(root).flatMap((manifest) => collectRangeViolations(manifest));
   return {
     name: 'dependency pinning',
     ok: violations.length === 0,
@@ -69,12 +73,13 @@ function checkExactVersions(): CheckResult {
   };
 }
 
-function checkBunfig(): string[] {
-  if (!existsSync('bunfig.toml')) {
+function checkBunfig(root: string): string[] {
+  const path = join(root, 'bunfig.toml');
+  if (!existsSync(path)) {
     return ['bunfig.toml が無い'];
   }
   const problems: string[] = [];
-  const bunfig = readFileSync('bunfig.toml', 'utf8');
+  const bunfig = readFileSync(path, 'utf8');
   if (!/^\s*exact\s*=\s*true/mu.test(bunfig)) {
     problems.push('bunfig.toml に exact = true が無い');
   }
@@ -89,7 +94,7 @@ function checkBunfig(): string[] {
 }
 
 /** インストール方針（完全固定・公開遅延・ロックファイル）を検証する。 */
-function checkInstallPolicy(): CheckResult {
+function checkInstallPolicy(root: string): CheckResult {
   const lockfiles = [
     { path: 'bun.lock', message: 'bun.lock が無い（integrity ハッシュが固定されない）' },
     {
@@ -98,10 +103,14 @@ function checkInstallPolicy(): CheckResult {
     },
   ];
   const problems = [
-    ...checkBunfig(),
-    ...lockfiles.filter((entry) => !existsSync(entry.path)).map((entry) => entry.message),
+    ...checkBunfig(root),
+    ...lockfiles
+      .filter((entry) => !existsSync(join(root, entry.path)))
+      .map((entry) => entry.message),
   ];
-  const trusted = Object.keys(asStringRecord(readJson('package.json')['trustedDependencies']));
+  const trusted = Object.keys(
+    asStringRecord(readJson(join(root, 'package.json'))['trustedDependencies']),
+  );
 
   return {
     name: 'install policy',
@@ -130,8 +139,8 @@ function isPinned(action: string): boolean {
 }
 
 /** GitHub Actions が可変タグではなくコミット SHA で固定されていることを検証する。 */
-function checkActionPinning(): CheckResult {
-  const directory = join('.github', 'workflows');
+function checkActionPinning(root: string): CheckResult {
+  const directory = join(root, '.github', 'workflows');
   if (!existsSync(directory)) {
     return {
       name: 'actions pinning',
@@ -158,6 +167,10 @@ function checkActionPinning(): CheckResult {
   };
 }
 
-export function checkSupplyChain(): CheckResult[] {
-  return [checkExactVersions(), checkInstallPolicy(), checkActionPinning()];
+export function checkSupplyChain(context: FitnessContext = defaultContext()): CheckResult[] {
+  return [
+    checkExactVersions(context.root),
+    checkInstallPolicy(context.root),
+    checkActionPinning(context.root),
+  ];
 }

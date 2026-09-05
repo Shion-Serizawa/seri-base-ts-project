@@ -4,9 +4,18 @@ import { gzipSync } from 'node:zlib';
 
 import { QUALITY_GATES } from '@seri/quality-gates';
 
+import type { FitnessContext } from '../lib/context.ts';
+import { defaultContext } from '../lib/context.ts';
 import type { CheckResult } from '../lib/report.ts';
 
 const NOT_BUILT = -1;
+
+export type SizeBudget = {
+  /** Worker 1 本あたりの gzip サイズ */
+  readonly apiGzipBytes: number;
+  /** SPA の JS 合計の gzip サイズ */
+  readonly webGzipBytes: number;
+};
 
 function listJsFiles(directory: string): string[] {
   const found: string[] = [];
@@ -68,18 +77,16 @@ function checkOne(name: string, directory: string, budget: number): CheckResult 
  * 適応度関数 ⑧ バンドルサイズ予算。
  * 「依存を足して楽をする」方向への牽制。複雑度やカバレッジを楽に満たすために
  * 巨大なライブラリを持ち込むとここで落ちる。
+ *
+ * `budget` を引数にしているのは、予算超過の挙動を現実的な大きさの
+ * フィクスチャで検証できるようにするため（既定値が単一情報源であることは変わらない）。
  */
-export function checkSizeBudget(): CheckResult[] {
+export function checkSizeBudget(
+  context: FitnessContext = defaultContext(),
+  budget: SizeBudget = QUALITY_GATES.sizeBudget,
+): CheckResult[] {
   return [
-    checkOne(
-      'bundle size (api)',
-      join('apps', 'api', 'dist'),
-      QUALITY_GATES.sizeBudget.apiGzipBytes,
-    ),
-    checkOne(
-      'bundle size (web)',
-      join('apps', 'web', 'dist'),
-      QUALITY_GATES.sizeBudget.webGzipBytes,
-    ),
+    checkOne('bundle size (api)', join(context.root, 'apps', 'api', 'dist'), budget.apiGzipBytes),
+    checkOne('bundle size (web)', join(context.root, 'apps', 'web', 'dist'), budget.webGzipBytes),
   ];
 }
