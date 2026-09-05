@@ -44,6 +44,57 @@ export const LINT_PLUGINS = [
  * 消しても off にしてもテストが落ちる。
  */
 export const REQUIRED_ERROR_RULES = [
+  // 制御フロー・暗黙変換・危険な実行を明示的に制限する
+  'curly',
+  'default-case-last',
+  'default-param-last',
+  'guard-for-in',
+  'no-alert',
+  'no-empty',
+  'no-implicit-coercion',
+  'no-new-func',
+  'no-param-reassign',
+  'no-proto',
+  'no-return-assign',
+  'no-script-url',
+  'no-sequences',
+  'no-template-curly-in-string',
+  'no-var',
+
+  // ESM の静的解析と型の境界を保つ
+  'import/no-amd',
+  'import/no-commonjs',
+  'import/no-dynamic-require',
+  'import/no-mutable-exports',
+  'typescript/consistent-type-exports',
+  'typescript/no-empty-object-type',
+  'typescript/no-import-type-side-effects',
+  'typescript/no-invalid-void-type',
+  'typescript/no-non-null-asserted-nullish-coalescing',
+  'typescript/no-require-imports',
+  'typescript/method-signature-style',
+  'typescript/use-unknown-in-catch-callback-variable',
+
+  // 例外・非同期処理・ブラウザの意図しない動作を防ぐ
+  'unicorn/error-message',
+  'unicorn/throw-new-error',
+  'unicorn/no-abusive-eslint-disable',
+  'unicorn/prefer-node-protocol',
+  'promise/no-return-wrap',
+  'promise/param-names',
+  'react/button-has-type',
+  'react/no-danger',
+  'react/no-unknown-property',
+
+  // テストの取り違えと弱い比較を防ぐ
+  'vitest/no-duplicate-hooks',
+  'vitest/no-identical-title',
+  'vitest/no-import-node-test',
+  'vitest/no-interpolation-in-snapshots',
+  'vitest/no-mocks-import',
+  'vitest/prefer-strict-equal',
+  'vitest/prefer-called-with',
+
   // 複雑度（数値は QUALITY_GATES.complexity と一致していることを別テストで検証）
   'complexity',
   'max-depth',

@@ -15,21 +15,21 @@ describe('changedFiles', () => {
   it('ベースブランチとの差分を使う', () => {
     const run = stubRun(() => ({ status: 0, stdout: 'apps/api/src/a.ts\n' }));
 
-    expect(changedFiles(run, 'origin/main')).toEqual(['apps/api/src/a.ts']);
+    expect(changedFiles(run, 'origin/main')).toStrictEqual(['apps/api/src/a.ts']);
     expect(run.calls[0]).toContain('origin/main...HEAD');
   });
 
   it('ベースが解決できなければ作業ツリーの差分に落とす', () => {
     const run = stubRun(rangedDiffFails);
 
-    expect(changedFiles(run, 'origin/missing')).toEqual(['apps/web/src/b.tsx']);
+    expect(changedFiles(run, 'origin/missing')).toStrictEqual(['apps/web/src/b.tsx']);
     expect(run.calls).toHaveLength(2);
   });
 
   it('空行を落とす', () => {
     const run = stubRun(() => ({ status: 0, stdout: 'a.ts\n\n  \nb.ts\n' }));
 
-    expect(changedFiles(run, 'main')).toEqual(['a.ts', 'b.ts']);
+    expect(changedFiles(run, 'main')).toStrictEqual(['a.ts', 'b.ts']);
   });
 });
 
@@ -40,14 +40,14 @@ describe('groupByWorkspace', () => {
       always,
     );
 
-    expect(groups.get('apps/api')).toEqual(['src/rpc/router.ts']);
-    expect(groups.get('packages/domain')).toEqual(['src/todo.ts']);
+    expect(groups.get('apps/api')).toStrictEqual(['src/rpc/router.ts']);
+    expect(groups.get('packages/domain')).toStrictEqual(['src/todo.ts']);
   });
 
   it('同じワークスペースの複数ファイルを 1 件にまとめる', () => {
     const groups = groupByWorkspace(['apps/api/src/a.ts', 'apps/api/src/b.ts'], always);
 
-    expect(groups.get('apps/api')).toEqual(['src/a.ts', 'src/b.ts']);
+    expect(groups.get('apps/api')).toStrictEqual(['src/a.ts', 'src/b.ts']);
   });
 
   it('テストファイル自身は対象にしない（テストを変えただけでは走らせない）', () => {
@@ -81,7 +81,7 @@ describe('groupByWorkspace', () => {
 
 describe('vitest 設定の有無（既定の判定）', () => {
   it('vitest.config.ts があるワークスペースは対象になる', () => {
-    expect(groupByWorkspace(['apps/api/src/a.ts']).get('apps/api')).toEqual(['src/a.ts']);
+    expect(groupByWorkspace(['apps/api/src/a.ts']).get('apps/api')).toStrictEqual(['src/a.ts']);
   });
 
   it('存在しないワークスペースは対象にならない', () => {

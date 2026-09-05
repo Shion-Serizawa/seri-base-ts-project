@@ -86,7 +86,7 @@ describe('checkTestRatio', () => {
   });
 
   it('計測対象外のディレクトリは数えない', () => {
-    expect(detailsOf(checkOf({ 'docs/example.ts': 'const a = 1;\n' }))).toEqual([]);
+    expect(detailsOf(checkOf({ 'docs/example.ts': 'const a = 1;\n' }))).toStrictEqual([]);
   });
 
   it('空のリポジトリでも例外にならず PASS', () => {

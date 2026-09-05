@@ -46,7 +46,7 @@ describe('checkContextDrift', () => {
       'CLAUDE.md': '[ADR](docs/adr/9999-nope.md)',
     });
 
-    expect(details).toEqual(['CLAUDE.md: docs/adr/9999-nope.md が存在しない']);
+    expect(details).toStrictEqual(['CLAUDE.md: docs/adr/9999-nope.md が存在しない']);
   });
 
   it('バッククォートで書かれたパスの参照切れも検出する', () => {
@@ -55,7 +55,7 @@ describe('checkContextDrift', () => {
       'CLAUDE.md': '`packages/contract/src/gone.ts` を見る',
     });
 
-    expect(details).toEqual(['CLAUDE.md: packages/contract/src/gone.ts が存在しない']);
+    expect(details).toStrictEqual(['CLAUDE.md: packages/contract/src/gone.ts が存在しない']);
   });
 
   it('存在しない bun run スクリプトを検出する', () => {
@@ -64,7 +64,7 @@ describe('checkContextDrift', () => {
       'CLAUDE.md': '`bun run nosuchscript` を実行する',
     });
 
-    expect(details).toEqual(['CLAUDE.md: bun run nosuchscript が存在しない']);
+    expect(details).toStrictEqual(['CLAUDE.md: bun run nosuchscript が存在しない']);
   });
 
   it('--filter 付きのスクリプトをワークスペースの package.json で解決する', () => {
@@ -74,10 +74,10 @@ describe('checkContextDrift', () => {
       'CLAUDE.md': '`bun run --filter @seri/db db:generate` を実行する',
     };
 
-    expect(detailsOf(files)).toEqual([]);
-    expect(detailsOf({ ...files, 'CLAUDE.md': '`bun run --filter @seri/db db:nope`' })).toEqual([
-      'CLAUDE.md: bun run --filter @seri/db db:nope が存在しない',
-    ]);
+    expect(detailsOf(files)).toStrictEqual([]);
+    expect(
+      detailsOf({ ...files, 'CLAUDE.md': '`bun run --filter @seri/db db:nope`' }),
+    ).toStrictEqual(['CLAUDE.md: bun run --filter @seri/db db:nope が存在しない']);
   });
 
   it('依存しているだけの package.json を、そのワークスペースだと誤認しない', () => {
@@ -93,7 +93,7 @@ describe('checkContextDrift', () => {
         'packages/db/package.json': DB_PACKAGE_JSON,
         'CLAUDE.md': '`bun run --filter @seri/db db:generate` を実行する',
       }),
-    ).toEqual([]);
+    ).toStrictEqual([]);
   });
 
   it('スキルの相対リンクはスキルの位置から解決する', () => {
@@ -103,11 +103,11 @@ describe('checkContextDrift', () => {
       '.claude/skills/add-thing/SKILL.md': '[README](../../../README.md)',
     };
 
-    expect(detailsOf(files)).toEqual([]);
+    expect(detailsOf(files)).toStrictEqual([]);
     // ルートからの相対だと思って書くと、実際には解決できない
     expect(
       detailsOf({ ...files, '.claude/skills/add-thing/SKILL.md': '[README](README.md)' }),
-    ).toEqual([
+    ).toStrictEqual([
       '.claude/skills/add-thing/SKILL.md: .claude/skills/add-thing/README.md が存在しない',
     ]);
   });
@@ -135,14 +135,14 @@ describe('checkContextDrift', () => {
         'package.json': PACKAGE_JSON,
         'CLAUDE.md': '[a](https://example.com/x.md) [b](#section) [c](mailto:x@example.com)',
       }),
-    ).toEqual([]);
+    ).toStrictEqual([]);
   });
 
   it('アンカー付きのリンクはファイル部分だけを見る', () => {
     const files = { 'package.json': PACKAGE_JSON, 'README.md': '# readme' };
 
-    expect(detailsOf({ ...files, 'CLAUDE.md': '[a](README.md#品質ゲート)' })).toEqual([]);
-    expect(detailsOf({ ...files, 'CLAUDE.md': '[a](GONE.md#品質ゲート)' })).toEqual([
+    expect(detailsOf({ ...files, 'CLAUDE.md': '[a](README.md#品質ゲート)' })).toStrictEqual([]);
+    expect(detailsOf({ ...files, 'CLAUDE.md': '[a](GONE.md#品質ゲート)' })).toStrictEqual([
       'CLAUDE.md: GONE.md が存在しない',
     ]);
   });
@@ -153,7 +153,7 @@ describe('checkContextDrift', () => {
         'package.json': PACKAGE_JSON,
         'CLAUDE.md': ['`/api/rpc`', '`<resource>.ts`', '`os`', '`scripts/**/*.ts`'].join('\n'),
       }),
-    ).toEqual([]);
+    ).toStrictEqual([]);
   });
 
   it('同じ参照が複数回出ても 1 件にまとめる', () => {
@@ -162,7 +162,7 @@ describe('checkContextDrift', () => {
         'package.json': PACKAGE_JSON,
         'CLAUDE.md': '[a](gone.md) をもう一度 [a](gone.md)',
       }),
-    ).toEqual(['CLAUDE.md: gone.md が存在しない']);
+    ).toStrictEqual(['CLAUDE.md: gone.md が存在しない']);
   });
 
   it('文書が 1 つも無ければ FAIL（消せば緑になる、を防ぐ）', () => {

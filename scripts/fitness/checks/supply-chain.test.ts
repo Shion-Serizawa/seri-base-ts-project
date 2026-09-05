@@ -42,7 +42,7 @@ describe('checkSupplyChain', () => {
   it('健全なリポジトリでは 3 件すべて PASS', () => {
     const results = [...resultsOf(healthyRepo()).values()];
 
-    expect(results.map((result) => result.name)).toEqual([
+    expect(results.map((result) => result.name)).toStrictEqual([
       'dependency pinning',
       'install policy',
       'actions pinning',

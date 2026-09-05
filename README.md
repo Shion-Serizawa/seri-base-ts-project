@@ -60,6 +60,7 @@ bun run dev
 | `bun run dev`                     | 全アプリの開発サーバ（turbo）                     |
 | `bun run build`                   | ビルド                                            |
 | `bun run lint`                    | oxlint（**型情報つき**。tsgolint 経由）           |
+| `bun run lint:fix`                | 型情報つき Lint と安全な自動修正                  |
 | `bun run lint:quick`              | oxlint（型情報なし。pre-commit 用）               |
 | `bun run format` / `format:check` | oxfmt                                             |
 | `bun run typecheck`               | tsc --noEmit（TypeScript 7 ネイティブ）           |
@@ -116,6 +117,10 @@ off にしているルールの集合、override で無効化しているルー�
 
 `any` の混入は「割合」ではなく **error** で禁止している（`typescript/no-unsafe-*`、
 `no-explicit-any`、`no-unsafe-type-assertion`、`ban-ts-comment`）。
+
+追加の厳格ルールで引数の変更、危険な JSX、弱いテスト比較なども禁止しています。
+`void` による Promise の放置、文字列・数値などの暗黙の真偽値変換、不要な Lint 抑制コメントも
+エラーです。選定理由は [ADR 0008](docs/adr/0008-stricter-lint.md) を参照してください。
 
 **適応度関数の実装（`scripts/`）自体もテスト対象です。** ここのバグは
 「ゲートが黙って緑になる」形で現れ、型検査でも他のテストでも捕まりません

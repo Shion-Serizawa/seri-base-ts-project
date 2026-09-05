@@ -14,6 +14,10 @@ import {
 const severityValueSchema = z.union([z.string(), z.tuple([z.string()]).rest(z.unknown())]);
 
 const oxlintrcSchema = z.object({
+  options: z.object({
+    denyWarnings: z.boolean(),
+    reportUnusedDisableDirectives: z.string(),
+  }),
   plugins: z.array(z.string()),
   categories: z.record(z.string(), z.string()),
   rules: z.record(z.string(), severityValueSchema),
@@ -43,6 +47,33 @@ function isDangerousToDisable(name: string): boolean {
 }
 
 const config = loadOxlintrc();
+
+describe('実行オプションとルールの強度', () => {
+  it('警告と不要な抑制コメントを失敗にする', () => {
+    expect(config.options).toStrictEqual({
+      denyWarnings: true,
+      reportUnusedDisableDirectives: 'error',
+    });
+  });
+
+  it('void による Promise の放置を許可しない', () => {
+    expect(config.rules['typescript/no-floating-promises']).toStrictEqual([
+      'error',
+      { ignoreVoid: false },
+    ]);
+  });
+
+  it('文字列・数値・nullable オブジェクトの条件を明示する', () => {
+    expect(config.rules['typescript/strict-boolean-expressions']).toStrictEqual([
+      'error',
+      { allowString: false, allowNumber: false, allowNullableObject: false },
+    ]);
+  });
+
+  it('引数のプロパティの変更も禁止する', () => {
+    expect(config.rules['no-param-reassign']).toStrictEqual(['error', { props: true }]);
+  });
+});
 
 /**
  * Lint 設定そのものの改ざんを検出する。

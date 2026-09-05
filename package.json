@@ -18,7 +18,7 @@
     "jscpd": "jscpd",
     "knip": "knip",
     "lint": "oxlint --type-aware",
-    "lint:fix": "oxlint --fix",
+    "lint:fix": "oxlint --type-aware --fix",
     "lint:quick": "oxlint",
     "mutation": "bun run scripts/mutation/run-changed.ts",
     "openapi:generate": "bun run scripts/openapi/write-spec.ts",
