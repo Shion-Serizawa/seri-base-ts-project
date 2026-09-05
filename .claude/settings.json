@@ -1,5 +1,26 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(bun run build)",
+      "Bash(bun run fitness)",
+      "Bash(bun run fitness:deps)",
+      "Bash(bun run format:check)",
+      "Bash(bun run knip)",
+      "Bash(bun run lint)",
+      "Bash(bun run lint:quick)",
+      "Bash(bun run openapi:generate)",
+      "Bash(bun run test)",
+      "Bash(bun run test:coverage)",
+      "Bash(bun run test:scripts)",
+      "Bash(bun run typecheck)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git status:*)"
+    ],
+    "ask": ["Bash(bun add:*)", "Bash(bun remove:*)", "Bash(bunx wrangler:*)", "Bash(git push:*)"]
+  },
   "hooks": {
     "Stop": [
       {
