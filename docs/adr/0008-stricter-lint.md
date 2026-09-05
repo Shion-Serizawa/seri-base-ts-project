@@ -11,8 +11,10 @@ AI Coding を主な開発手段とするため、未採用カテゴリの品質�
 
 ## 決定
 
-style / restriction から 43 ルールを個別採用する。具体的な一覧は
-`.oxlintrc.json` と `tooling/quality-gates/src/lint-policy.ts` で管理する。
+style / restriction からルールを個別採用する。**一覧も件数も
+`tooling/quality-gates/src/lint-policy.ts` の `REQUIRED_ERROR_RULES` が単一情報源**で、
+`.oxlintrc.json` との一致は ⑪ が完全一致で検証する。件数はここには書かない
+（増減するたびに文書だけが古くなり、機械では検出できない）。
 引数とそのプロパティの変更、動的コード実行、可変 export、空オブジェクト型、
 catch コールバックの暗黙の any、危険な JSX、テストの重複や弱い比較を制限する。
 
@@ -38,3 +40,35 @@ React の null、async/await、ルーティング規約まで禁止するルー�
 
 新しい実装は引数を直接変更せず、Promise の失敗を明示的に処理する必要がある。
 外部 API の仕様で例外が必要な場合は理由と対象を限定してレビューする。
+
+## ⑪ の適用範囲を固定した（2026-09-05）
+
+レビューで、⑪ が categories / plugins / rules / overrides の **severity** しか見ておらず、
+**適用範囲**が素通しになっていることが分かった。新ルールで大量にエラーが出たときに
+`.oxlintrc.json` の `ignorePatterns` に `"apps/web/src/**"` を 1 行足せばエラーは消え、
+⑪ のテストは全部緑のまま通る。severity の改ざんを塞いだのと同じ抜け道が、
+範囲指定の側に残っていた。
+
+対応:
+
+- `oxlintrcSchema` を `.strict()` にした。非 strict の `z.object` は未知のトップレベルキーを
+  パースの時点で捨てるため、`ignorePatterns` はどのアサーションからも見えていなかった
+- 除外先を `LINT_IGNORE_PATTERNS` としてポリシー化し、完全一致で固定した。
+  あわせて「除外がソースディレクトリを覆っていない」ことも検証する
+- `overrides[].files` がリポジトリ全体を覆う場合は、`ALLOWED_OVERRIDE_OFF_RULES` に
+  載っているルールであっても `off` を認めない。ディレクトリ単位の例外という建前が
+  成立しなくなるため
+
+## 既知の制約: `lint:quick` と不要な disable コメント
+
+`options.reportUnusedDisableDirectives: "error"` はグローバル設定なので、型情報なしで走る
+`lint:quick`（pre-commit）にも効く。**型情報つきでしか報告されないルールに対する正当な
+抑制コメントは、`lint:quick` では「未使用の disable」と判定される。**
+
+つまり `// oxlint-disable-next-line typescript/no-floating-promises` を 1 行入れると、
+`bun run lint` は緑、pre-commit は exit 1 になりうる。ルール名なしの `// oxlint-disable` に
+逃げると `unicorn/no-abusive-eslint-disable` に引っかかる。
+
+現時点で該当する抑制コメントは 0 件なので設定は変えていない。最初の 1 件が出たときは、
+抑制コメントではなく `overrides` でスコープを切って表現する。それでも足りなければ
+`lint:quick` 側だけ unused-disable の報告を落とす。
