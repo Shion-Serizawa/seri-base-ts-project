@@ -56,7 +56,25 @@ Agentic Engineering）と、ループ・グラフエンジニアリングの統�
 運用の約束ではなく `bun run fitness` で止める。詳細は
 [0002](0002-fitness-functions.md) の ⑬ を参照。
 
-### 4. Maker–Checker は「別コンテキストのレビュー」で足りるとみなす
+### 4. 未コミットのまま応答を終えさせない（Stop hook）
+
+既定の Claude Code は「明示的に頼まれたときだけコミットする」ため、作業だけして
+応答を終えることがある。次のセッションは、どこまでが意図した変更なのか分からない
+作業ツリーから始まる。これを運用の約束にせず、`.claude/settings.json` の Stop hook
+（`scripts/hooks/require-commit.ts`）で止める。
+
+この範囲で追加したもののうち**割り込みが最も強い**（応答の終了そのものをブロックする）
+ので、性質を明記しておく。
+
+- 2 周目は `stop_hook_active` を見て必ず通す。見ないと「ブロック → 停止 → ブロック」で
+  無限ループになる
+- 未追跡ファイル（`??`）も対象にする。新規ファイルの置き忘れが実際の事故だったため。
+  恒常的に残す生成物は `.gitignore` に入れる
+- 意図的に残す場合の逃げ道は「理由をユーザーに伝えてから終了」とブロック理由に書いてある
+- `git status` が失敗したらブロック側に倒す。空の出力を「変更なし」と読むと、
+  git が壊れた瞬間に安全装置が黙って無効になる
+
+### 5. Maker–Checker は「別コンテキストのレビュー」で足りるとみなす
 
 参照した資料は独立 Verifier に別モデル・別プロセス・チェックポイント永続化を求めるが、
 その大部分は「複数エージェントが並列に走る組織」の要請である。
@@ -80,8 +98,12 @@ Agentic Engineering）と、ループ・グラフエンジニアリングの統�
 
 ## 結果
 
-- `CLAUDE.md`、`.claude/settings.json`（permissions と PostToolUse hook）、
+- `CLAUDE.md`、`.claude/settings.json`（permissions、PostToolUse hook、Stop hook）、
   スキル 2 件（`add-procedure` / `add-fitness-check`）を追加した
+- hook は 2 本。`post-edit`（PostToolUse / Edit・Write）が再生成を促し、
+  `require-commit`（Stop）が未コミットのまま応答を終えるのを止める。
+  どちらも判定を純関数に切り出してテストしている（「促すべきなのに黙る」は
+  ゲートが黙って緑になるのと同じ壊れ方なので）
 - 適応度関数が 12 件から 13 件になった
 - ⑬ は実装中に自分自身のバグを 2 件検出した（不要な export と、
   ワークスペースの取り違え）。詳細は [0002](0002-fitness-functions.md) の ⑬
@@ -92,3 +114,6 @@ Agentic Engineering）と、ループ・グラフエンジニアリングの統�
   これが最大の穴で、Context 層とは独立の既存課題
 - hook が促すのは 3 パターンのみ。増やすと通知が騒がしくなるので、
   実際に忘れて落ちた事例が出てから足す
+- `CLAUDE.md` が Maker–Checker の要としている `/code-review` は**環境側（プラグイン）依存**で、
+  リポジトリには実体が無い。⑬ はパスと `bun run` しか見ないのでこの参照切れは検出できない。
+  環境が変わったときに黙って失われる点は残る穴として認識しておく

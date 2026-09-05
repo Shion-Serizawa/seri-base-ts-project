@@ -22,13 +22,20 @@ description: このリポジトリに新しい API 手続き（oRPC procedure）
   branded type にする（受け取った id を他の string と取り違えないため）。
   新しいリソースなら `<resource>.ts` / `<resource>-contract.ts` を足し、
   `packages/contract/src/index.ts` から re-export する（未使用 export は knip が落とす）。
+- **`apiContract` に名前空間を登録する。** アプリ全体の契約は
+  `packages/contract/src/todo-contract.ts` 末尾の `apiContract`（`{ todo: todoContract }`）に
+  集約されていて、`index.ts` が re-export しているのはこの 1 つと各スキーマだけ。
+  `apps/api/src/rpc/router.ts` は `implement(apiContract)` からビルダーを作るので、
+  **ここに足さないとステップ 3 で `os.<resource>` が型に存在せず router を書けない**。
 - 契約: `packages/contract/src/todo-contract.ts` に倣い、`oc` で `.input()` / `.output()` /
   `.errors()` を宣言する。**エラーは必ず契約に載せる** — HTTP ステータスの取り決めではなく
   型付きコードとして扱えるようになり、OpenAPI にもそのまま出る。
   - 認証が要る手続きは `UNAUTHORIZED` を持つ `authenticated` ベースから派生させる
   - 他人のリソースに触れうる手続きには `NOT_FOUND` を宣言する（403 は id の存在を漏らす）
-- 契約の「面」を固定するテスト（`packages/contract/src/todo-contract.test.ts`）の
-  手続き一覧は**手で更新する**。ここが落ちるのは意図した変更のサイン。
+- 契約の「面」を固定するテスト（`packages/contract/src/todo-contract.test.ts`）と、
+  OpenAPI のパス一覧を固定するテスト（`scripts/openapi/document.test.ts`）の
+  手続き一覧は**手で更新する**。ここが落ちるのは意図した変更のサインなので、
+  緩めたり消したりしない。
 - 型の退化（brand を外す、入力型を広げる）は `packages/contract/src/todo.test-d.ts` の
   型テストで止めている。新しい型にも同じ粒度で 1〜2 本足す。
 

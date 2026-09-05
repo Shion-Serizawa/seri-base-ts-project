@@ -40,7 +40,8 @@ export function checkThing(context: FitnessContext = defaultContext()): CheckRes
   `context.run` と `outputLines`、`node_modules/.bin` は
   [scripts/fitness/lib/bin.ts](../../../scripts/fitness/lib/bin.ts) の `localBin`、
   ソースの走査は [scripts/fitness/lib/walk.ts](../../../scripts/fitness/lib/walk.ts) を使う
-- テストのためだけの export を増やさない。⑥′ `knip --production` が落とす。
+- テストのためだけの export を増やさない。⑥′（`knip --production`。README のゲート表では
+  ⑥ の一部で、⑥′ の呼称は [0002](../../../docs/adr/0002-fitness-functions.md) で使っている）が落とす。
   テストは公開している検査関数を通して書く（フィクスチャ都合の値は
   `checkSizeBudget(context, budget)` のように**引数の既定値**として渡す）
 
@@ -68,6 +69,11 @@ AI も人間も、そこを読んで直す。
 [scripts/fitness/collect.ts](../../../scripts/fitness/collect.ts) に追加する。
 何をここに含めないか（vitest / oxlint 側で強制しているもの）はファイル冒頭のコメントにある。
 `collect.test.ts` の検査名の一覧と件数も更新する。
+
+**`healthyRoot()` のフィクスチャも直す。** `collect.test.ts` は「全件 PASS」を検証するので、
+新しい検査が PASS するために必要なファイル（⑬ なら `CLAUDE.md`）を足さないと落ちる。
+ここで落ちたときに「検査の実装が悪い」と誤診してしきい値や判定を緩めるのが最悪の手。
+まずフィクスチャ不足を疑う。
 
 ## 4. 対のテストを書く: `scripts/fitness/checks/<name>.test.ts`
 

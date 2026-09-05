@@ -33,7 +33,10 @@ const RULES: readonly Rule[] = [
     },
   },
   {
-    matches: /(^|\/)packages\/db\/src\/.+\.ts$/u,
+    // CLAUDE.md の「変更したら走らせるもの」表は `schema.ts` に限定している。
+    // `src` 配下すべてに広げると `index.ts` の 1 行修正でも割り込むことになり、
+    // 空振りが「助言を無視する／hook を外す」方向に効く。
+    matches: /(^|\/)packages\/db\/src\/schema\.ts$/u,
     advice: {
       reason: 'DB スキーマを変更しました',
       action:

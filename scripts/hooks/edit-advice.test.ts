@@ -71,6 +71,11 @@ describe('adviceFor', () => {
     expect(reasonsOf([`${ROOT}/packages/contract/README.md`])).toStrictEqual([]);
   });
 
+  it('db の schema.ts 以外では促さない（CLAUDE.md の表と範囲を揃える）', () => {
+    expect(reasonsOf([`${ROOT}/packages/db/src/index.ts`])).toStrictEqual([]);
+    expect(reasonsOf([`${ROOT}/packages/db/src/client.ts`])).toStrictEqual([]);
+  });
+
   it('同じ助言は 1 件にまとめる', () => {
     const paths = [
       `${ROOT}/packages/contract/src/todo.ts`,

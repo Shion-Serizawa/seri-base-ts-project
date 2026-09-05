@@ -11,6 +11,7 @@
         "scripts/hooks/require-commit.ts!",
         "scripts/hooks/post-edit.ts!",
         "scripts/**/*.test.ts",
+        "scripts/test/**",
         "vitest.config.ts"
       ],
       "project": ["scripts/**/*.ts!", "vitest.config.ts"]
@@ -52,11 +53,5 @@
     }
   },
   "ignoreDependencies": ["@seri/tsconfig", "cloudflare"],
-  "ignore": [
-    "**/*.gen.ts",
-    "**/worker-configuration.d.ts",
-    ".stryker-tmp/**",
-    "**/.stryker-tmp/**",
-    "scripts/test/**"
-  ]
+  "ignore": ["**/*.gen.ts", "**/worker-configuration.d.ts", ".stryker-tmp/**", "**/.stryker-tmp/**"]
 }
