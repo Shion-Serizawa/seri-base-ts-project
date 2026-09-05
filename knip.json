@@ -9,6 +9,7 @@
         "scripts/git/check-commit-message.ts!",
         "scripts/openapi/write-spec.ts!",
         "scripts/hooks/require-commit.ts!",
+        "scripts/hooks/post-edit.ts!",
         "scripts/**/*.test.ts",
         "vitest.config.ts"
       ],

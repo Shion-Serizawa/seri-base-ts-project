@@ -22,6 +22,18 @@
     "ask": ["Bash(bun add:*)", "Bash(bun remove:*)", "Bash(bunx wrangler:*)", "Bash(git push:*)"]
   },
   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/post-edit.ts",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
