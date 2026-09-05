@@ -24,7 +24,7 @@ describe('listSourceFiles', () => {
       'readme.md': '',
     });
 
-    expect(listSourceFiles(root)).toEqual([join(root, 'keep.ts')]);
+    expect(listSourceFiles(root)).toStrictEqual([join(root, 'keep.ts')]);
   });
 
   it('node_modules や dist などの生成ディレクトリに降りない', () => {
@@ -36,11 +36,11 @@ describe('listSourceFiles', () => {
       '.stryker-tmp/sandbox/x.ts': '',
     });
 
-    expect(listSourceFiles(root)).toEqual([join(root, 'src', 'keep.ts')]);
+    expect(listSourceFiles(root)).toStrictEqual([join(root, 'src', 'keep.ts')]);
   });
 
   it('存在しないディレクトリは空配列を返す（例外にしない）', () => {
-    expect(listSourceFiles(join(makeTempRepo({}), 'missing'))).toEqual([]);
+    expect(listSourceFiles(join(makeTempRepo({}), 'missing'))).toStrictEqual([]);
   });
 });
 

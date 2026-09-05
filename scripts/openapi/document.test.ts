@@ -18,7 +18,7 @@ describe('buildOpenApiDocument', () => {
   it('契約のすべての手続きが載る', () => {
     const paths = keysOf(document['paths']);
 
-    expect(paths.toSorted()).toEqual([
+    expect(paths.toSorted()).toStrictEqual([
       '/todo/create',
       '/todo/list',
       '/todo/remove',

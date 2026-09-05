@@ -11,62 +11,64 @@ function reasonsOf(filePaths: readonly string[]): string[] {
 
 describe('parseEditedPaths', () => {
   it('tool_input.file_path を読む', () => {
-    expect(parseEditedPaths('{"tool_input":{"file_path":"/a/b.ts"}}')).toEqual(['/a/b.ts']);
+    expect(parseEditedPaths('{"tool_input":{"file_path":"/a/b.ts"}}')).toStrictEqual(['/a/b.ts']);
   });
 
   it('file_path が無ければ空を返す', () => {
-    expect(parseEditedPaths('{"tool_input":{}}')).toEqual([]);
+    expect(parseEditedPaths('{"tool_input":{}}')).toStrictEqual([]);
   });
 
   it('tool_input が無くても例外にしない', () => {
-    expect(parseEditedPaths('{"tool_name":"Bash"}')).toEqual([]);
+    expect(parseEditedPaths('{"tool_name":"Bash"}')).toStrictEqual([]);
   });
 
   it('file_path が文字列でなければ無視する', () => {
-    expect(parseEditedPaths('{"tool_input":{"file_path":42}}')).toEqual([]);
+    expect(parseEditedPaths('{"tool_input":{"file_path":42}}')).toStrictEqual([]);
   });
 
   it('壊れた JSON でも例外にせず空を返す', () => {
-    expect(parseEditedPaths('not json')).toEqual([]);
-    expect(parseEditedPaths('null')).toEqual([]);
+    expect(parseEditedPaths('not json')).toStrictEqual([]);
+    expect(parseEditedPaths('null')).toStrictEqual([]);
   });
 });
 
 describe('adviceFor', () => {
   it('契約を変えたら OpenAPI の再生成を促す', () => {
-    expect(reasonsOf([`${ROOT}/packages/contract/src/todo.ts`])).toEqual([
+    expect(reasonsOf([`${ROOT}/packages/contract/src/todo.ts`])).toStrictEqual([
       'API 契約を変更しました',
     ]);
   });
 
   it('DB スキーマを変えたらマイグレーション生成を促す', () => {
-    expect(reasonsOf([`${ROOT}/packages/db/src/schema.ts`])).toEqual(['DB スキーマを変更しました']);
+    expect(reasonsOf([`${ROOT}/packages/db/src/schema.ts`])).toStrictEqual([
+      'DB スキーマを変更しました',
+    ]);
   });
 
   it('しきい値を変えたら README と ADR への追記を促す', () => {
-    expect(reasonsOf([`${ROOT}/tooling/quality-gates/src/index.ts`])).toEqual([
+    expect(reasonsOf([`${ROOT}/tooling/quality-gates/src/index.ts`])).toStrictEqual([
       '品質ゲートのしきい値かポリシーを変更しました',
     ]);
   });
 
   it('Windows の \\ 区切りでも判定できる', () => {
-    expect(reasonsOf(['d:\\Shion\\repo\\packages\\contract\\src\\todo.ts'])).toEqual([
+    expect(reasonsOf(['d:\\Shion\\repo\\packages\\contract\\src\\todo.ts'])).toStrictEqual([
       'API 契約を変更しました',
     ]);
   });
 
   it('該当しないファイルでは何も促さない', () => {
-    expect(reasonsOf([`${ROOT}/apps/web/src/main.tsx`, `${ROOT}/README.md`])).toEqual([]);
+    expect(reasonsOf([`${ROOT}/apps/web/src/main.tsx`, `${ROOT}/README.md`])).toStrictEqual([]);
   });
 
   it('テストと型テストでは促さない（生成物に影響しない）', () => {
-    expect(reasonsOf([`${ROOT}/packages/contract/src/todo.test.ts`])).toEqual([]);
-    expect(reasonsOf([`${ROOT}/packages/contract/src/todo.test-d.ts`])).toEqual([]);
+    expect(reasonsOf([`${ROOT}/packages/contract/src/todo.test.ts`])).toStrictEqual([]);
+    expect(reasonsOf([`${ROOT}/packages/contract/src/todo.test-d.ts`])).toStrictEqual([]);
   });
 
   it('似た名前のパスを誤って拾わない', () => {
-    expect(reasonsOf([`${ROOT}/apps/api/src/contract/src/todo.ts`])).toEqual([]);
-    expect(reasonsOf([`${ROOT}/packages/contract/README.md`])).toEqual([]);
+    expect(reasonsOf([`${ROOT}/apps/api/src/contract/src/todo.ts`])).toStrictEqual([]);
+    expect(reasonsOf([`${ROOT}/packages/contract/README.md`])).toStrictEqual([]);
   });
 
   it('同じ助言は 1 件にまとめる', () => {

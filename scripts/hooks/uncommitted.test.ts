@@ -14,38 +14,38 @@ const DIRTY = ' M README.md\n?? scripts/hooks/uncommitted.ts\n';
 
 describe('parseStopInput', () => {
   it('stop_hook_active: true を読む', () => {
-    expect(parseStopInput('{"stop_hook_active":true}')).toEqual(CONTINUING);
+    expect(parseStopInput('{"stop_hook_active":true}')).toStrictEqual(CONTINUING);
   });
 
   it('stop_hook_active: false を読む', () => {
-    expect(parseStopInput('{"stop_hook_active":false}')).toEqual(IDLE);
+    expect(parseStopInput('{"stop_hook_active":false}')).toStrictEqual(IDLE);
   });
 
   it('キーが無ければ継続中ではないとみなす', () => {
-    expect(parseStopInput('{"session_id":"abc"}')).toEqual(IDLE);
+    expect(parseStopInput('{"session_id":"abc"}')).toStrictEqual(IDLE);
   });
 
   it('true 以外の値を継続中とみなさない（"false" 文字列などで素通ししない）', () => {
-    expect(parseStopInput('{"stop_hook_active":"false"}')).toEqual(IDLE);
+    expect(parseStopInput('{"stop_hook_active":"false"}')).toStrictEqual(IDLE);
   });
 
   it('壊れた JSON でも例外にせず、判定する側に倒す', () => {
-    expect(parseStopInput('not json')).toEqual(IDLE);
+    expect(parseStopInput('not json')).toStrictEqual(IDLE);
   });
 
   it('JSON がオブジェクトでなくても例外にしない', () => {
-    expect(parseStopInput('[1,2]')).toEqual(IDLE);
-    expect(parseStopInput('null')).toEqual(IDLE);
+    expect(parseStopInput('[1,2]')).toStrictEqual(IDLE);
+    expect(parseStopInput('null')).toStrictEqual(IDLE);
   });
 });
 
 describe('decide', () => {
   it('作業ツリーがきれいなら停止させる', () => {
-    expect(decide(IDLE, '')).toEqual({ block: false });
+    expect(decide(IDLE, '')).toStrictEqual({ block: false });
   });
 
   it('空白だけの出力も「変更なし」として扱う', () => {
-    expect(decide(IDLE, '\n  \n')).toEqual({ block: false });
+    expect(decide(IDLE, '\n  \n')).toStrictEqual({ block: false });
   });
 
   it('未コミットがあれば停止をブロックする', () => {
@@ -71,6 +71,6 @@ describe('decide', () => {
   });
 
   it('フックで継続中は必ず通す（無限ループを防ぐ）', () => {
-    expect(decide(CONTINUING, DIRTY)).toEqual({ block: false });
+    expect(decide(CONTINUING, DIRTY)).toStrictEqual({ block: false });
   });
 });

@@ -27,7 +27,7 @@ describe('checkExternalTools', () => {
   it('jscpd も含めて 3 件の検査を返す', () => {
     const results = checkExternalTools(contextOf(makeTempRepo({}), stubRun(allPass)));
 
-    expect(results.map((result) => result.name)).toEqual([
+    expect(results.map((result) => result.name)).toStrictEqual([
       'dead code (knip)',
       'dead code (production)',
       'duplication (jscpd)',
@@ -51,7 +51,7 @@ describe('checkExternalTools', () => {
     const run = stubRun(onlyFailing('jscpd', { status: 1, stdout: '重複が 5%\n' }));
     const results = checkExternalTools(contextOf(makeTempRepo({}), run));
 
-    expect(results.find((result) => result.name === 'duplication (jscpd)')?.details).toEqual([
+    expect(results.find((result) => result.name === 'duplication (jscpd)')?.details).toStrictEqual([
       '重複が 5%',
     ]);
   });
@@ -66,6 +66,6 @@ describe('checkExternalTools', () => {
     const run = stubRun(onlyFailing('--production', { status: 1 }));
     const results = checkExternalTools(contextOf(makeTempRepo({}), run));
 
-    expect(results.map((result) => result.ok)).toEqual([true, false, true]);
+    expect(results.map((result) => result.ok)).toStrictEqual([true, false, true]);
   });
 });

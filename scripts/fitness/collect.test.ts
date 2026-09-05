@@ -34,13 +34,13 @@ describe('collectChecks', () => {
   it('健全なリポジトリではすべての検査が PASS になる', async () => {
     const results = await collectChecks(contextOf(await healthyRoot()));
 
-    expect(results.filter((result) => !result.ok)).toEqual([]);
+    expect(results.filter((result) => !result.ok)).toStrictEqual([]);
   });
 
   it('13 本の検査を返す', async () => {
     const results = await collectChecks(contextOf(await healthyRoot()));
 
-    expect(results.map((result) => result.name)).toEqual([
+    expect(results.map((result) => result.name)).toStrictEqual([
       'test ratio',
       'dead code (knip)',
       'dead code (production)',
@@ -71,7 +71,7 @@ describe('collectChecks', () => {
 
     const failed = (await collectChecks(contextOf(root, run))).filter((result) => !result.ok);
 
-    expect(failed.map((result) => result.name)).toEqual(['duplication (jscpd)']);
+    expect(failed.map((result) => result.name)).toStrictEqual(['duplication (jscpd)']);
   });
 
   it('外部コマンドを実際に起動せずに全検査が走る（root の外に触れない）', async () => {

@@ -18,7 +18,7 @@ function resultsOf(files: Readonly<Record<string, string>>, budget = GENEROUS): 
 
 describe('checkSizeBudget', () => {
   it('api と web の 2 本を見る', () => {
-    expect(resultsOf(BUILT).map((result) => result.name)).toEqual([
+    expect(resultsOf(BUILT).map((result) => result.name)).toStrictEqual([
       'bundle size (api)',
       'bundle size (web)',
     ]);
@@ -46,7 +46,7 @@ describe('checkSizeBudget', () => {
   it('片方だけ未ビルドならその 1 件だけ FAIL になる', () => {
     const results = resultsOf({ 'apps/api/dist/worker.js': 'console.log(1);' });
 
-    expect(results.map((result) => result.ok)).toEqual([true, false]);
+    expect(results.map((result) => result.ok)).toStrictEqual([true, false]);
   });
 
   it('.js と .mjs だけを数え、サブディレクトリも辿る', () => {

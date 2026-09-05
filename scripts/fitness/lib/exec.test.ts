@@ -47,14 +47,14 @@ describe('outputLines', () => {
   it('stdout と stderr を結合し、空行を落として先頭から切り出す', () => {
     const lines = outputLines({ status: 1, stdout: 'a\n\nb\n', stderr: 'c\n' }, 2);
 
-    expect(lines).toEqual(['a', 'b']);
+    expect(lines).toStrictEqual(['a', 'b']);
   });
 
   it('行末の空白を落とす', () => {
-    expect(outputLines({ status: 1, stdout: 'x   \n', stderr: '' }, 5)).toEqual(['x']);
+    expect(outputLines({ status: 1, stdout: 'x   \n', stderr: '' }, 5)).toStrictEqual(['x']);
   });
 
   it('出力が無ければ空配列になる', () => {
-    expect(outputLines({ status: 0, stdout: '', stderr: '' }, 5)).toEqual([]);
+    expect(outputLines({ status: 0, stdout: '', stderr: '' }, 5)).toStrictEqual([]);
   });
 });
