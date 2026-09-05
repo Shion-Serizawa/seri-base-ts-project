@@ -22,6 +22,7 @@
     "**/reports/**",
     "**/.wrangler/**",
     "**/.stryker-tmp/**",
-    "**/*.gen.ts"
+    "**/*.gen.ts",
+    "docs/openapi.json"
   ]
 }
