@@ -86,10 +86,19 @@ describe('checkTestRatio', () => {
   });
 
   it('計測対象外のディレクトリは数えない', () => {
-    expect(detailsOf(checkOf({ 'docs/example.ts': 'const a = 1;\n' }))).toStrictEqual([]);
+    const details = detailsOf(checkOf({ ...workspaceOf(10, 10), 'docs/example.ts': 'const a = 1;\n' }));
+
+    expect(details.some((line) => line.startsWith('docs'))).toBe(false);
   });
 
-  it('空のリポジトリでも例外にならず PASS', () => {
-    expect(checkOf({}).ok).toBe(true);
+  it('ソースが 1 本も無ければ FAIL にする（比率 0.00 の PASS にしない）', () => {
+    const result = checkOf({});
+
+    expect(result.ok).toBe(false);
+    expect(result.actual).toBe('ソースなし（計測不能）');
+  });
+
+  it('空のリポジトリでも例外にはならない', () => {
+    expect(() => checkOf({})).not.toThrow();
   });
 });

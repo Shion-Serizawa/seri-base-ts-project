@@ -19,6 +19,10 @@ function generateReturns(outcome: Partial<CommandOutcome>) {
 const statusReturns = (stdout: string) => (command: string) =>
   command.startsWith('git status') ? { status: 0, stdout } : OK;
 
+/** `git status` だけを指定の結果に差し替える（drizzle-kit は成功のまま）。 */
+const statusFailsWith = (outcome: Partial<CommandOutcome>) => (command: string) =>
+  command.startsWith('git status') ? outcome : OK;
+
 type SeenOptions = { readonly cwd?: string; readonly timeoutMs?: number };
 
 /** drizzle-kit の呼び出しに渡されたオプションを記録する。 */
@@ -80,6 +84,21 @@ describe('checkSchemaDrift', () => {
 
     expect(result.actual).toBe('drizzle-kit が失敗');
     expect(result.details).toContain('schema.ts が読めない');
+  });
+
+  it('git status が失敗したら FAIL にする（変更なしに倒さない）', () => {
+    const run = stubRun(statusFailsWith({ status: 128, stderr: 'not a git repository\n' }));
+
+    const result = checkSchemaDrift(contextOf(makeTempRepo({}), run));
+
+    expect(result.ok).toBe(false);
+    expect(result.actual).toBe('git status が実行できなかった');
+  });
+
+  it('git status が起動できなくても（status: null）FAIL にする', () => {
+    const run = stubRun(statusFailsWith({ status: null }));
+
+    expect(checkSchemaDrift(contextOf(makeTempRepo({}), run)).ok).toBe(false);
   });
 
   it('未コミットのマイグレーションが生成されたら FAIL にして一覧を出す', () => {

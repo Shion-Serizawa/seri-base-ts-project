@@ -79,6 +79,19 @@ export function checkTestRatio(context: FitnessContext = defaultContext()): Chec
     emptyCounts(),
   );
   const { max } = QUALITY_GATES.testRatio;
+
+  // ソースが 1 本も見つからない = root の指定が誤っているか走査が壊れている。
+  // 比率 0.00 の PASS にすると、リポジトリ外から叩いたときに黙って緑になる。
+  if (byWorkspace.length === 0) {
+    return {
+      name: 'test ratio',
+      ok: false,
+      actual: 'ソースなし（計測不能）',
+      expected: `各ワークスペース <= ${max.toFixed(2)}`,
+      details: [`${context.root} 配下にソースが見つからない`],
+    };
+  }
+
   const over = byWorkspace.filter(([, counts]) => ratioOf(counts) > max);
 
   return {

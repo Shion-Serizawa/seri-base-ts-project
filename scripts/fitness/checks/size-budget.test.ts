@@ -43,6 +43,16 @@ describe('checkSizeBudget', () => {
     expect(resultsOf({})[0]?.details?.[0]).toContain('bun run build');
   });
 
+  it('dist はあるが JS が 1 本も無い場合も FAIL にする（0 バイトを予算内と読まない）', () => {
+    const results = resultsOf({
+      'apps/api/dist/worker.js.map': 'x',
+      'apps/web/dist/index.html': '<html></html>',
+    });
+
+    expect(results.map((result) => result.ok)).toStrictEqual([false, false]);
+    expect(results[0]?.actual).toBe('未ビルド（計測不能）');
+  });
+
   it('片方だけ未ビルドならその 1 件だけ FAIL になる', () => {
     const results = resultsOf({ 'apps/api/dist/worker.js': 'console.log(1);' });
 

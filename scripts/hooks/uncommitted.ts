@@ -1,3 +1,5 @@
+import type { CommandOutcome } from '../fitness/lib/exec.ts';
+
 /**
  * Claude Code の `Stop` フックの判定。
  *
@@ -52,13 +54,26 @@ function changedEntries(porcelain: string): string[] {
     .filter((line) => line.trim().length > 0);
 }
 
-export function decide(input: StopHookInput, porcelain: string): Decision {
+export function decide(input: StopHookInput, status: CommandOutcome): Decision {
   // 2 周目（このフックで継続した後）は必ず通す。ここを外すと無限ループになる
   if (input.stopHookActive) {
     return { block: false };
   }
 
-  const entries = changedEntries(porcelain);
+  // git を実行できなかった場合の空出力を「変更なし」と読むと、git が壊れた瞬間に
+  // この安全装置が黙って無効になる。判定できないならブロック側に倒す。
+  if (status.status !== 0) {
+    return {
+      block: true,
+      reason: [
+        'git の状態を確認できませんでした（`git status --porcelain` が失敗）。',
+        '未コミットの変更が残っていないか手動で確認してから終了してください。',
+        ...(status.stderr.trim().length > 0 ? [status.stderr.trim()] : []),
+      ].join('\n'),
+    };
+  }
+
+  const entries = changedEntries(status.stdout);
   if (entries.length === 0) {
     return { block: false };
   }

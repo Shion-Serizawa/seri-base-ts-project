@@ -69,9 +69,16 @@ describe('printReport', () => {
     expect(output()).toContain('        原因の 1 行目');
   });
 
-  it('検査が 0 件でも例外にならず true を返す', () => {
+  it('検査が 0 件なら false を返す（収集が壊れたのを緑にしない）', () => {
     captureOutput();
 
-    expect(printReport([])).toBe(true);
+    expect(printReport([])).toBe(false);
+  });
+
+  it('検査が 0 件のときは収集できなかったことを表示する', () => {
+    const output = captureOutput();
+    printReport([]);
+
+    expect(output()).toContain('適応度関数が 1 件も収集できませんでした');
   });
 });
