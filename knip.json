@@ -8,6 +8,7 @@
         "scripts/mutation/run-changed.ts!",
         "scripts/git/check-commit-message.ts!",
         "scripts/openapi/write-spec.ts!",
+        "scripts/hooks/require-commit.ts!",
         "scripts/**/*.test.ts",
         "vitest.config.ts"
       ],
