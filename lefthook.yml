@@ -45,8 +45,10 @@ pre-push:
     - name: typecheck (scripts)
       run: node_modules/.bin/tsc --noEmit -p tsconfig.json
 
+    # 適応度関数の実装（scripts/）自体のテストも含める。
+    # `//#` はルートワークスペースのタスクを指す turbo の記法。
     - name: test with coverage
-      run: node_modules/.bin/turbo run test:coverage
+      run: node_modules/.bin/turbo run test:coverage '//#test:scripts:coverage'
 
     # 適応度関数のバンドルサイズ検査は dist を見るため、先にビルドする
     # （turbo のキャッシュが効くので差分が無ければ数百ミリ秒）

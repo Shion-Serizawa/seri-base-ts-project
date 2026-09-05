@@ -7,6 +7,11 @@ type CoverageOptions = {
   /** カバレッジ計測から外すパス。再エクスポートのみのバレルファイル等 */
   readonly exclude?: readonly string[];
   /**
+   * 計測対象。既定は `src/**`。
+   * ルートワークスペース（`scripts/**`）のように src レイアウトでない場合に指定する。
+   */
+  readonly coverageInclude?: readonly string[];
+  /**
    * 計測方式。既定は v8（高速）。
    * Cloudflare Workers プール（workerd）は v8 の Profiler セッションを実装していないため
    * `istanbul`（コード計装方式）を指定する必要がある。
@@ -17,6 +22,8 @@ type CoverageOptions = {
 type Options = CoverageOptions & {
   readonly environment?: Environment;
   readonly setupFiles?: readonly string[];
+  /** テストファイルの探索パターン。既定は `src/**` */
+  readonly include?: readonly string[];
   /** 振る舞いを持たない宣言だけのパッケージ向け */
   readonly passWithNoTests?: boolean;
 };
@@ -32,7 +39,7 @@ export function createCoverageOptions(
     provider: options.provider ?? 'v8',
     reporter: ['text-summary', 'json-summary', 'lcov'],
     reportsDirectory: './coverage',
-    include: ['src/**/*.ts', 'src/**/*.tsx'],
+    include: [...(options.coverageInclude ?? ['src/**/*.ts', 'src/**/*.tsx'])],
     exclude: [
       'src/**/*.test.ts',
       'src/**/*.test.tsx',
@@ -57,19 +64,30 @@ export const TEST_INCLUDE = ['src/**/*.test.ts', 'src/**/*.test.tsx'] as const;
 
 /** Node / DOM 環境のパッケージ向け共通 Vitest 設定。 */
 export function createVitestConfig(options: Options = {}): ViteUserConfig {
-  const { environment = 'node', setupFiles = [], exclude = [], passWithNoTests = false } = options;
+  const {
+    environment = 'node',
+    setupFiles = [],
+    exclude = [],
+    include = TEST_INCLUDE,
+    passWithNoTests = false,
+  } = options;
 
   return {
     test: {
       environment,
       setupFiles: [...setupFiles],
-      include: [...TEST_INCLUDE],
+      include: [...include],
       passWithNoTests,
       clearMocks: true,
       restoreMocks: true,
       unstubEnvs: true,
       unstubGlobals: true,
-      coverage: createCoverageOptions({ exclude }),
+      coverage: createCoverageOptions({
+        exclude,
+        ...(options.coverageInclude === undefined
+          ? {}
+          : { coverageInclude: options.coverageInclude }),
+      }),
     },
   };
 }
