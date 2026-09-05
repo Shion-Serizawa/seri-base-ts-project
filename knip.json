@@ -6,9 +6,12 @@
         "scripts/fitness/run.ts!",
         "scripts/fitness/supply-chain.ts!",
         "scripts/mutation/run-changed.ts!",
-        "scripts/git/check-commit-message.ts!"
+        "scripts/git/check-commit-message.ts!",
+        "scripts/openapi/write-spec.ts!",
+        "scripts/**/*.test.ts",
+        "vitest.config.ts"
       ],
-      "project": ["scripts/**/*.ts!"]
+      "project": ["scripts/**/*.ts!", "vitest.config.ts"]
     },
     "apps/api": {
       "entry": [
@@ -47,5 +50,11 @@
     }
   },
   "ignoreDependencies": ["@seri/tsconfig", "cloudflare"],
-  "ignore": ["**/*.gen.ts", "**/worker-configuration.d.ts", ".stryker-tmp/**", "**/.stryker-tmp/**"]
+  "ignore": [
+    "**/*.gen.ts",
+    "**/worker-configuration.d.ts",
+    ".stryker-tmp/**",
+    "**/.stryker-tmp/**",
+    "scripts/test/**"
+  ]
 }

@@ -30,6 +30,16 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "//#test:scripts": {
+      "dependsOn": ["^build"],
+      "inputs": ["scripts/**", "vitest.config.ts", "docs/openapi.json", "package.json"],
+      "outputs": []
+    },
+    "//#test:scripts:coverage": {
+      "dependsOn": ["^build"],
+      "inputs": ["scripts/**", "vitest.config.ts", "docs/openapi.json", "package.json"],
+      "outputs": ["coverage/**"]
     }
   }
 }
