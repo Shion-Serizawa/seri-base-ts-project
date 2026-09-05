@@ -18,8 +18,12 @@ tooling/
   vitest-config/  共有 Vitest 設定
   quality-gates/  適応度関数のしきい値の単一情報源
 scripts/
-  fitness/      適応度関数の計測
-  mutation/      変更ファイルのみのミューテーションテスト
+  fitness/      適応度関数の計測（実装自体もテスト対象）
+  mutation/     変更ファイルのみのミューテーションテスト
+  openapi/      契約から OpenAPI ドキュメントを生成
+  git/          Conventional Commits 検査
+docs/
+  openapi.json  生成物。契約との乖離を適応度関数 ⑫ が検出する
 ```
 
 依存の向きは `contract → domain → db → api → web` の一方向。
@@ -57,6 +61,8 @@ bun run dev
 | `bun run format` / `format:check` | oxfmt                                             |
 | `bun run typecheck`               | tsc --noEmit（TypeScript 7 ネイティブ）           |
 | `bun run test` / `test:coverage`  | Vitest（api は miniflare 上の実 D1 で統合テスト） |
+| `bun run test:scripts`            | 適応度関数の実装（`scripts/`）のテストのみ        |
+| `bun run openapi:generate`        | 契約から `docs/openapi.json` を生成               |
 | `bun run fitness`                 | 適応度関数の一括計測                              |
 | `bun run fitness:deps`            | サプライチェーンのみ高速検証                      |
 | `bun run mutation`                | 変更ファイルのミューテーションテスト              |
@@ -85,6 +91,7 @@ oxlint / stryker / jscpd の設定ファイル側の数値と食い違ってい�
 | ⑨   | シークレットの混入ゼロ（作業ツリー + git 履歴）     | gitleaks                                     | —                                     | —                                    |
 | ⑩   | スキーマとマイグレーションの乖離ゼロ                | drizzle-kit                                  | —                                     | —                                    |
 | ⑪   | **Lint 設定そのものの改ざんゼロ**                   | `tooling/quality-gates` のテスト             | ゲートに詰まったら設定を緩める        | ⑪ が全指標を守る                     |
+| ⑫   | 契約と OpenAPI ドキュメントの乖離ゼロ               | `bun run fitness`                            | —                                     | —                                    |
 
 ⑪ は他のすべての指標の前提です。カテゴリの severity、error にしているルールの集合、
 off にしているルールの集合、override で無効化しているルールを
@@ -105,6 +112,29 @@ off にしているルールの集合、override で無効化しているルー�
 
 `any` の混入は「割合」ではなく **error** で禁止している（`typescript/no-unsafe-*`、
 `no-explicit-any`、`no-unsafe-type-assertion`、`ban-ts-comment`）。
+
+**適応度関数の実装（`scripts/`）自体もテスト対象です。** ここのバグは
+「ゲートが黙って緑になる」形で現れ、型検査でも他のテストでも捕まりません
+（実際に過去 2 件のゲートがこれで機能していませんでした）。
+各検査は `FitnessContext`（`root` / `run` / `ci`）を引数で受け取るので、
+テストは一時ディレクトリに作った擬似リポジトリと差し替えたコマンド実行に対して走ります
+（knip も gitleaks も起動しません）。`bun run test:scripts` で単体実行できます。
+
+## API ドキュメント（OpenAPI）
+
+`docs/openapi.json` を `packages/contract` の契約から生成しています。実装ではなく契約から
+生成するので、ドキュメント専用のアノテーションが要らず、契約と食い違うこともありません。
+zod の制約（`title` の 1〜200 文字）、branded type の `TodoId`（`format: uuid`）、
+契約で宣言した型付きエラー（`UNAUTHORIZED` / `NOT_FOUND` / `BLANK_TITLE`）まで載ります。
+
+```bash
+bun run openapi:generate   # 契約を変えたら実行してコミットする
+```
+
+生成物はコミットします（契約変更が破壊的変更かどうかをレビューで差分として見るため）。
+契約との乖離は適応度関数 ⑫ が検出します。生成器は Worker には載せていません
+（バンドルサイズ予算をドキュメントのために使わないため）。
+詳細は [docs/adr/0006-openapi-generation.md](docs/adr/0006-openapi-generation.md)。
 
 ## フォーマッタ
 
@@ -140,11 +170,11 @@ bun run format:check  # 差分があれば失敗する（CI と同じ）
 
 ## Git フック
 
-| フック     | 内容                                                                                 | 目安     |
-| ---------- | ------------------------------------------------------------------------------------ | -------- |
-| pre-commit | 差分の oxfmt + oxlint（型情報なし）、`package.json` 等を触ったらサプライチェーン検証 | 1 秒未満 |
-| commit-msg | Conventional Commits 形式                                                            | 即時     |
-| pre-push   | 型情報つき lint / 型検査 / 全テスト+カバレッジ / 適応度関数                          | 数十秒   |
+| フック     | 内容                                                                                   | 目安     |
+| ---------- | -------------------------------------------------------------------------------------- | -------- |
+| pre-commit | 差分の oxfmt + oxlint（型情報なし）、`package.json` 等を触ったらサプライチェーン検証   | 1 秒未満 |
+| commit-msg | Conventional Commits 形式                                                              | 即時     |
+| pre-push   | 型情報つき lint / 型検査 / 全テスト+カバレッジ（`scripts/` 込み）/ ビルド / 適応度関数 | 数十秒   |
 
 ## サプライチェーン対策
 
@@ -174,7 +204,6 @@ bun add <pkg> --minimum-release-age=0
 - E2E（Playwright）: 現在ルーティングの結線（`apps/web/src/routes/**`）だけがテスト対象外
 - AI Coding 向けの環境整備（CLAUDE.md、スキル、MCP など）
 - 認証 UI（サインイン・サインアップ画面）。API と認証クライアントの結線までは完了している
-- `scripts/` のテスト（実装 617 行に対してテスト 0 行）。適応度関数の実装自体が未テストで、
-  実際にここのバグで 2 件のゲートが機能していなかった。`bun run fitness` の
-  ワークスペース別表示で可視化されている
-- OpenAPI ドキュメント生成（`@orpc/openapi` を足せば可能）
+- `packages/db` と `tooling/vitest-config` の直接のテスト（振る舞いは api の統合テストと
+  各パッケージの利用側で検証している。`bun run fitness` のワークスペース別表示で可視化される）
+- REST 形式の API 公開（契約に `.route()` を足して `OpenAPIHandler` をマウントすれば可能）
