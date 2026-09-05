@@ -1,4 +1,5 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import type { Dirent } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 
 import type { FitnessContext } from '../lib/context.ts';
@@ -9,22 +10,62 @@ import type { CheckResult } from '../lib/report.ts';
 const ROOT_DOCUMENT = 'CLAUDE.md';
 const SKILLS_DIRECTORY = join('.claude', 'skills');
 
-/** markdown リンク `](path)`。 */
-const MARKDOWN_LINK = /\]\(([^\s)]+)\)/gu;
+/** markdown リンク `](path)`。タイトル付き `](path "title")` と山括弧囲みも拾う。 */
+const MARKDOWN_LINK = /\]\(\s*<?([^\s)>]+)>?(?:\s+"[^"]*")?\s*\)/gu;
 
 /**
  * バッククォートで囲まれた、リポジトリルート起点に見えるパス。
  * 先頭をワークスペースのディレクトリ名に限っているのは、`/api/rpc` のような
  * URL や `<resource>.ts` のようなプレースホルダを拾わないため。
  */
-const BACKTICK_PATH = /`((?:apps|packages|tooling|scripts|docs)\/[A-Za-z0-9._/-]+)`/gu;
+const BACKTICK_PATH = /`((?:\.claude|apps|packages|tooling|scripts|docs)\/[A-Za-z0-9._/-]+)`/gu;
 
-/** `bun run <script>` と `bun run --filter @seri/<pkg> <script>`。 */
-const BUN_RUN = /bun run (?:--filter (@seri\/[a-z-]+) )?([a-z][\w:-]*)/gu;
+/**
+ * バッククォートで囲まれた、リポジトリルート直下の設定ファイル。
+ * ディレクトリ前置きが無いので `BACKTICK_PATH` では拾えないが、
+ * CLAUDE.md がしきい値の二重管理先として名指ししている以上、実在を検査する。
+ */
+const BACKTICK_ROOT_FILE =
+  /`((?:\.oxlintrc|\.oxfmtrc|\.jscpd|knip|turbo|stryker\.config|lefthook|package|tsconfig)\.(?:json|yml|yaml))`/gu;
+
+/**
+ * `bun run <script>` と `bun run --filter @<scope>/<pkg> <script>`。
+ *
+ * スクリプト名の直後に `/` や `.` が続く形（`bun run scripts/fitness/run.ts`）は
+ * npm script ではなくファイル直指定なので、ここでは拾わない（`BUN_RUN_FILE` が見る）。
+ * 後読みを付けないと先頭セグメントだけを切り出して「存在しない script」と誤判定する。
+ */
+const BUN_RUN = /bun run (?:--filter ((?:@[\w.-]+\/)?[\w.-]+) )?([a-z][\w:-]*)(?![\w:/.-])/gu;
+
+/** `bun run <path>.ts` のようなファイル直指定。実在するファイルかを見る。 */
+const BUN_RUN_FILE = /bun run ((?:[\w.-]+\/)+[\w.-]+\.[cm]?tsx?)/gu;
 
 /** 参照ではないリンク（外部 URL、ページ内アンカー）。 */
 function isExternal(target: string): boolean {
   return /^(?:https?:|mailto:|#)/u.test(target);
+}
+
+/**
+ * `.claude/skills` 配下の `SKILL.md` を再帰的に集める。
+ *
+ * 1 階層しか見ないと、スキルをグループ分けした瞬間に対象 0 件になり、
+ * 参照切れが黙って検出されなくなる（⑬ 自身の false green）。
+ */
+function collectSkillFiles(directory: string, found: string[]): void {
+  let entries: Dirent[];
+  try {
+    entries = readdirSync(directory, { withFileTypes: true });
+  } catch {
+    // 権限エラーや壊れたエントリで fitness 全体を落とさない
+    return;
+  }
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      collectSkillFiles(join(directory, entry.name), found);
+    } else if (entry.name === 'SKILL.md') {
+      found.push(join(directory, entry.name));
+    }
+  }
 }
 
 /** `CLAUDE.md` と `.claude/skills/**\/SKILL.md` を集める。 */
@@ -35,16 +76,7 @@ function listContextDocuments(root: string): string[] {
     found.push(rootDocument);
   }
 
-  const skillsRoot = join(root, SKILLS_DIRECTORY);
-  if (!existsSync(skillsRoot)) {
-    return found;
-  }
-  for (const entry of readdirSync(skillsRoot)) {
-    const skillFile = join(skillsRoot, entry, 'SKILL.md');
-    if (statSync(join(skillsRoot, entry)).isDirectory() && existsSync(skillFile)) {
-      found.push(skillFile);
-    }
-  }
+  collectSkillFiles(join(root, SKILLS_DIRECTORY), found);
   return found;
 }
 
@@ -59,23 +91,35 @@ function missingPaths(root: string, document: string): string[] {
   const links = captures(text, MARKDOWN_LINK)
     .filter((target) => !isExternal(target))
     .map((target) => resolve(dirname(document), target.split('#')[0] ?? ''));
-  const backticked = captures(text, BACKTICK_PATH).map((target) => resolve(root, target));
+  const backticked = [
+    ...captures(text, BACKTICK_PATH),
+    ...captures(text, BACKTICK_ROOT_FILE),
+  ].map((target) => resolve(root, target));
 
   return [...new Set([...links, ...backticked])]
     .filter((target) => !existsSync(target))
     .map((target) => relative(root, target).replaceAll('\\', '/'));
 }
 
-/** `package.json` を読む。存在しない・オブジェクトでないなら空。 */
+/**
+ * `package.json` を読む。存在しない・読めない・壊れている・オブジェクトでないなら空。
+ *
+ * 編集途中の壊れた `package.json` が 1 つあるだけで `bun run fitness` 全体が
+ * 未捕捉の例外で死に、他のゲートの結果ごと失われるのを避ける。
+ */
 function readPackageJson(packageJsonPath: string): Record<string, unknown> {
   if (!existsSync(packageJsonPath)) {
     return {};
   }
-  const parsed: unknown = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
-  if (typeof parsed !== 'object' || parsed === null) {
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+    if (typeof parsed !== 'object' || parsed === null) {
+      return {};
+    }
+    return Object.fromEntries(Object.entries(parsed));
+  } catch {
     return {};
   }
-  return Object.fromEntries(Object.entries(parsed));
 }
 
 /** `package.json` の `scripts` のキー。 */
@@ -125,6 +169,13 @@ function missingScripts(root: string, document: string): string[] {
       missing.push(
         workspace === undefined ? `bun run ${script}` : `bun run --filter ${workspace} ${script}`,
       );
+    }
+  }
+
+  for (const match of text.matchAll(BUN_RUN_FILE)) {
+    const file = match[1] ?? '';
+    if (!existsSync(join(root, file))) {
+      missing.push(`bun run ${file}`);
     }
   }
   return [...new Set(missing)];

@@ -165,6 +165,85 @@ describe('checkContextDrift', () => {
     ).toStrictEqual(['CLAUDE.md: gone.md が存在しない']);
   });
 
+  it('`bun run <ファイルパス>` を script 名と誤認しない（実在すれば PASS）', () => {
+    expect(
+      detailsOf({
+        'package.json': PACKAGE_JSON,
+        'scripts/fitness/run.ts': '',
+        'CLAUDE.md': '入口は `bun run scripts/fitness/run.ts`。',
+      }),
+    ).toStrictEqual([]);
+  });
+
+  it('`bun run <ファイルパス>` のファイルが無ければ FAIL にする', () => {
+    expect(
+      detailsOf({
+        'package.json': PACKAGE_JSON,
+        'CLAUDE.md': '入口は `bun run scripts/fitness/gone.ts`。',
+      }),
+    ).toStrictEqual(['CLAUDE.md: bun run scripts/fitness/gone.ts が存在しない']);
+  });
+
+  it('ワークスペース名に数字が入っていても --filter を検査する', () => {
+    expect(
+      detailsOf({
+        'package.json': PACKAGE_JSON,
+        'packages/db2/package.json': JSON.stringify({ name: '@seri/db2', scripts: {} }),
+        'CLAUDE.md': '`bun run --filter @seri/db2 nope` を実行する。',
+      }),
+    ).toStrictEqual(['CLAUDE.md: bun run --filter @seri/db2 nope が存在しない']);
+  });
+
+  it('タイトル付きの markdown リンクも参照として拾う', () => {
+    expect(
+      detailsOf({
+        'package.json': PACKAGE_JSON,
+        'CLAUDE.md': '[a](GONE.md "タイトル")',
+      }),
+    ).toStrictEqual(['CLAUDE.md: GONE.md が存在しない']);
+  });
+
+  it('ルート直下の設定ファイルの参照切れも検出する', () => {
+    expect(
+      detailsOf({
+        'package.json': PACKAGE_JSON,
+        'CLAUDE.md': 'しきい値は `.oxlintrc.json` と `stryker.config.json` にも書く。',
+      }),
+    ).toStrictEqual([
+      'CLAUDE.md: .oxlintrc.json が存在しない',
+      'CLAUDE.md: stryker.config.json が存在しない',
+    ]);
+  });
+
+  it('`.claude/` 配下の参照切れも検出する', () => {
+    expect(
+      detailsOf({
+        'package.json': PACKAGE_JSON,
+        'CLAUDE.md': '設定は `.claude/settings.json` にある。',
+      }),
+    ).toStrictEqual(['CLAUDE.md: .claude/settings.json が存在しない']);
+  });
+
+  it('階層化したスキルの SKILL.md も検査対象にする', () => {
+    expect(
+      detailsOf({
+        'package.json': PACKAGE_JSON,
+        'CLAUDE.md': '# ok',
+        '.claude/skills/group/nested/SKILL.md': '[gone](../../../../GONE.md)',
+      }),
+    ).toStrictEqual(['.claude/skills/group/nested/SKILL.md: GONE.md が存在しない']);
+  });
+
+  it('壊れた package.json があっても例外にしない', () => {
+    expect(() =>
+      detailsOf({
+        'package.json': PACKAGE_JSON,
+        'packages/broken/package.json': '{ 壊れている',
+        'CLAUDE.md': '`bun run --filter @seri/db db:generate` を実行する。',
+      }),
+    ).not.toThrow();
+  });
+
   it('文書が 1 つも無ければ FAIL（消せば緑になる、を防ぐ）', () => {
     const result = checkContextDrift(contextOf(makeTempRepo({ 'package.json': PACKAGE_JSON })));
 
