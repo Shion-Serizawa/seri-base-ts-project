@@ -25,6 +25,7 @@ async function healthyRoot(): Promise<string> {
     'apps/api/dist/worker.js': 'console.log(1);',
     'apps/web/dist/main.js': 'console.log(2);',
     'packages/domain/src/todo.ts': 'const a = 1;\n',
+    'CLAUDE.md': '`packages/domain/src/todo.ts` を見る。\n',
     [OPENAPI_SPEC_PATH]: serializeOpenApiDocument(await buildOpenApiDocument()),
   });
 }
@@ -36,7 +37,7 @@ describe('collectChecks', () => {
     expect(results.filter((result) => !result.ok)).toEqual([]);
   });
 
-  it('12 本の検査を返す', async () => {
+  it('13 本の検査を返す', async () => {
     const results = await collectChecks(contextOf(await healthyRoot()));
 
     expect(results.map((result) => result.name)).toEqual([
@@ -52,6 +53,7 @@ describe('collectChecks', () => {
       'secret scan',
       'schema drift',
       'openapi drift',
+      'context drift',
     ]);
   });
 

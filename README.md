@@ -92,6 +92,7 @@ oxlint / stryker / jscpd の設定ファイル側の数値と食い違ってい�
 | ⑩   | スキーマとマイグレーションの乖離ゼロ                | drizzle-kit                                  | —                                     | —                                    |
 | ⑪   | **Lint 設定そのものの改ざんゼロ**                   | `tooling/quality-gates` のテスト             | ゲートに詰まったら設定を緩める        | ⑪ が全指標を守る                     |
 | ⑫   | 契約と OpenAPI ドキュメントの乖離ゼロ               | `bun run fitness`                            | —                                     | —                                    |
+| ⑬   | `CLAUDE.md` とスキルの参照切れゼロ                  | `bun run fitness`                            | **文書ごと消す**                      | ⑬ が「文書なし」を FAIL にする       |
 
 ⑪ は他のすべての指標の前提です。カテゴリの severity、error にしているルールの集合、
 off にしているルールの集合、override で無効化しているルールを
@@ -119,6 +120,11 @@ off にしているルールの集合、override で無効化しているルー�
 各検査は `FitnessContext`（`root` / `run` / `ci`）を引数で受け取るので、
 テストは一時ディレクトリに作った擬似リポジトリと差し替えたコマンド実行に対して走ります
 （knip も gitleaks も起動しません）。`bun run test:scripts` で単体実行できます。
+
+⑬ は AI に読ませる文書（`CLAUDE.md` と `.claude/skills/**/SKILL.md`）が参照している
+ファイルと `bun run` のスクリプトが実在することを検査します。ここが古くなる壊れ方は
+誰にも見えません。AI は存在しないパスを黙って諦め、存在しないコマンドを打って別の理由で
+失敗するので、原因が文書の陳腐化だと気づけないためです。
 
 ## API ドキュメント（OpenAPI）
 

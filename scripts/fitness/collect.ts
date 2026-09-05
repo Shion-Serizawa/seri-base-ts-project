@@ -1,3 +1,4 @@
+import { checkContextDrift } from './checks/context-drift.ts';
 import { checkExternalTools } from './checks/external-tools.ts';
 import { checkOpenApiDrift } from './checks/openapi-drift.ts';
 import { checkSchemaDrift } from './checks/schema-drift.ts';
@@ -28,5 +29,6 @@ export async function collectChecks(
     checkSecretScan(context),
     checkSchemaDrift(context),
     await checkOpenApiDrift(context),
+    checkContextDrift(context),
   ];
 }
