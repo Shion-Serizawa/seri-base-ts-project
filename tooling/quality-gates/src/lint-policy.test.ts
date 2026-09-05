@@ -7,27 +7,40 @@ import {
   ALLOWED_OFF_RULES,
   ALLOWED_OVERRIDE_OFF_RULES,
   LINT_CATEGORIES,
+  LINT_IGNORE_PATTERNS,
   LINT_PLUGINS,
+  REPOSITORY_WIDE_FILE_PATTERNS,
   REQUIRED_ERROR_RULES,
 } from './lint-policy.ts';
 
 const severityValueSchema = z.union([z.string(), z.tuple([z.string()]).rest(z.unknown())]);
 
-const oxlintrcSchema = z.object({
-  options: z.object({
-    denyWarnings: z.boolean(),
-    reportUnusedDisableDirectives: z.string(),
-  }),
-  plugins: z.array(z.string()),
-  categories: z.record(z.string(), z.string()),
-  rules: z.record(z.string(), severityValueSchema),
-  overrides: z.array(
-    z.object({
-      files: z.array(z.string()),
-      rules: z.record(z.string(), severityValueSchema).optional(),
-    }),
-  ),
-});
+// strict にしているのは、未知のトップレベルキーを黙って捨てないため。
+// 非 strict だと `ignorePatterns` のような「適用範囲」を足しても
+// パースの時点で消え、どのアサーションからも見えなくなる。
+const oxlintrcSchema = z
+  .object({
+    $schema: z.string(),
+    options: z
+      .object({
+        denyWarnings: z.boolean(),
+        reportUnusedDisableDirectives: z.string(),
+      })
+      .strict(),
+    plugins: z.array(z.string()),
+    categories: z.record(z.string(), z.string()),
+    rules: z.record(z.string(), severityValueSchema),
+    overrides: z.array(
+      z
+        .object({
+          files: z.array(z.string()),
+          rules: z.record(z.string(), severityValueSchema).optional(),
+        })
+        .strict(),
+    ),
+    ignorePatterns: z.array(z.string()),
+  })
+  .strict();
 
 type Oxlintrc = z.infer<typeof oxlintrcSchema>;
 
@@ -39,6 +52,15 @@ function loadOxlintrc(): Oxlintrc {
 
 function severityOf(value: z.infer<typeof severityValueSchema>): string {
   return Array.isArray(value) ? value[0] : value;
+}
+
+/** ルール定義のうち `off` にしているルール名。 */
+function offRulesOf(
+  rules: Record<string, z.infer<typeof severityValueSchema>> | undefined,
+): string[] {
+  return Object.entries(rules ?? {})
+    .filter(([, value]) => severityOf(value) === 'off')
+    .map(([name]) => name);
 }
 
 /** ディレクトリ単位で黙らせてはいけないルールか。 */
@@ -119,13 +141,7 @@ describe('rules の severity', () => {
 });
 
 describe('overrides', () => {
-  const disabled = new Set(
-    config.overrides.flatMap((override) =>
-      Object.entries(override.rules ?? {})
-        .filter(([, value]) => severityOf(value) === 'off')
-        .map(([name]) => name),
-    ),
-  );
+  const disabled = new Set(config.overrides.flatMap((override) => offRulesOf(override.rules)));
 
   it('override で off にできるのは許可されたルールだけ', () => {
     const notAllowed = [...disabled].filter(
@@ -138,5 +154,34 @@ describe('overrides', () => {
     expect(ALLOWED_OVERRIDE_OFF_RULES.filter((name) => isDangerousToDisable(name))).toStrictEqual(
       [],
     );
+  });
+});
+
+describe('適用範囲', () => {
+  it('ignorePatterns がポリシーと完全に一致する', () => {
+    // 除外先を固定しないと、新しいルールで大量にエラーが出たときに
+    // `apps/web/src/**` を 1 行足すだけでエラーが消え、他のアサーションは全部緑で通る
+    expect(config.ignorePatterns).toStrictEqual([...LINT_IGNORE_PATTERNS]);
+  });
+
+  it('ignorePatterns がソースディレクトリを覆っていない', () => {
+    const coversSource = config.ignorePatterns.filter((pattern) =>
+      /(?:^|\/)(?:apps|packages|tooling|scripts)(?:\/|$)/u.test(pattern),
+    );
+    expect(coversSource).toStrictEqual([]);
+  });
+
+  // ディレクトリ単位の例外という建前が成立しなくなるため、全体スコープでの
+  // off は許可ルールであっても認めない
+  const disabledEverywhere = config.overrides
+    .filter((override) =>
+      override.files.some((pattern) =>
+        REPOSITORY_WIDE_FILE_PATTERNS.some((wide) => wide === pattern),
+      ),
+    )
+    .flatMap((override) => offRulesOf(override.rules));
+
+  it('リポジトリ全体を覆う override でルールを off にしていない', () => {
+    expect(disabledEverywhere).toStrictEqual([]);
   });
 });

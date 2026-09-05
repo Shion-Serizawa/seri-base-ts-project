@@ -87,6 +87,9 @@ export function createVitestConfig(options: Options = {}): ViteUserConfig {
         ...(options.coverageInclude === undefined
           ? {}
           : { coverageInclude: options.coverageInclude }),
+        // 転送しないと `provider: 'istanbul'` が型エラーも警告も無く握り潰され、
+        // workerd で「カバレッジが 0」という分かりにくい形で現れる
+        ...(options.provider === undefined ? {} : { provider: options.provider }),
       }),
     },
   };

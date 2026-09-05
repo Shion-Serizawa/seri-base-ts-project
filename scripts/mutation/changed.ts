@@ -6,6 +6,15 @@ import type { RunCommand } from '../fitness/lib/exec.ts';
 const SOURCE_PATTERN = /^(apps|packages)\/([^/]+)\/src\/.+\.tsx?$/u;
 const TEST_PATTERN = /\.(?:test|spec)\.tsx?$/u;
 
+/**
+ * シェルに埋めても解釈が変わらない ref 名。
+ *
+ * `runCommand` は `shell: true` で実行するため、`;` `&` `$` `` ` `` を含む ref を
+ * そのまま埋めると別の ref を見にいく（悪意ある PR のブランチ名なら任意コマンドが走る）。
+ * git 上は合法でもここでは受け付けず、作業ツリー差分へのフォールバックに倒す。
+ */
+const SAFE_REF = /^[\w./-]+$/u;
+
 /** ワークスペースがミューテーションテストの対象になりうるか（vitest 設定があるか）。 */
 export type HasVitestConfig = (workspace: string) => boolean;
 
@@ -18,7 +27,9 @@ function hasVitestConfig(workspace: string): boolean {
  * ベースが解決できない環境（浅いクローン等）では作業ツリーの差分に落とす。
  */
 export function changedFiles(run: RunCommand, baseRef: string): string[] {
-  const ranged = run(`git diff --name-only ${baseRef}...HEAD`);
+  const ranged = SAFE_REF.test(baseRef)
+    ? run(`git diff --name-only ${baseRef}...HEAD`)
+    : { status: 1, stdout: '', stderr: '' };
   const output = ranged.status === 0 ? ranged.stdout : run('git diff --name-only HEAD').stdout;
   return output
     .split('\n')

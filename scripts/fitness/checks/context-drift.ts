@@ -91,10 +91,9 @@ function missingPaths(root: string, document: string): string[] {
   const links = captures(text, MARKDOWN_LINK)
     .filter((target) => !isExternal(target))
     .map((target) => resolve(dirname(document), target.split('#')[0] ?? ''));
-  const backticked = [
-    ...captures(text, BACKTICK_PATH),
-    ...captures(text, BACKTICK_ROOT_FILE),
-  ].map((target) => resolve(root, target));
+  const backticked = [...captures(text, BACKTICK_PATH), ...captures(text, BACKTICK_ROOT_FILE)].map(
+    (target) => resolve(root, target),
+  );
 
   return [...new Set([...links, ...backticked])]
     .filter((target) => !existsSync(target))
