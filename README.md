@@ -22,8 +22,11 @@ scripts/
   mutation/     変更ファイルのみのミューテーションテスト
   openapi/      契約から OpenAPI ドキュメントを生成
   git/          Conventional Commits 検査
+  hooks/        Claude Code のフック（未コミット検出・再生成の案内）
 docs/
   openapi.json  生成物。契約との乖離を適応度関数 ⑫ が検出する
+CLAUDE.md       AI に渡す索引と禁止事項（参照切れを適応度関数 ⑬ が検出する）
+.claude/        permissions・フック定義・スキル
 ```
 
 依存の向きは `contract → domain → db → api → web` の一方向。
@@ -208,7 +211,8 @@ bun add <pkg> --minimum-release-age=0
 ## 未着手（意図的に後回し）
 
 - E2E（Playwright）: 現在ルーティングの結線（`apps/web/src/routes/**`）だけがテスト対象外
-- AI Coding 向けの環境整備（CLAUDE.md、スキル、MCP など）
+- MCP サーバ（今つなぐ先が無いため。`CLAUDE.md` とスキルは
+  [docs/adr/0007-ai-coding-context.md](docs/adr/0007-ai-coding-context.md) で導入済み）
 - 認証 UI（サインイン・サインアップ画面）。API と認証クライアントの結線までは完了している
 - `packages/db` と `tooling/vitest-config` の直接のテスト（振る舞いは api の統合テストと
   各パッケージの利用側で検証している。`bun run fitness` のワークスペース別表示で可視化される）
