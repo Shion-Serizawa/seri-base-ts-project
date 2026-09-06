@@ -1,8 +1,9 @@
-import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { loadEffectiveOxlintConfig } from '../test/oxlint-config.ts';
 import {
   ALLOWED_OFF_RULES,
   ALLOWED_OVERRIDE_OFF_RULES,
@@ -46,10 +47,17 @@ const oxlintrcSchema = z
 
 type Oxlintrc = z.infer<typeof oxlintrcSchema>;
 
+const ROOT_CONFIG = fileURLToPath(new URL('../../../.oxlintrc.json', import.meta.url));
+const BASE_CONFIG = fileURLToPath(new URL('../oxlint-base.json', import.meta.url));
+
+/**
+ * `extends` を解決した実効設定を検証する（ADR 0010 の決定 6）。
+ *
+ * ルートの `.oxlintrc.json` は薄いラッパなので、ファイルをそのまま読むと
+ * カテゴリもルールも「検査対象に無い」状態になり、改ざんを検出できなくなる。
+ */
 function loadOxlintrc(): Oxlintrc {
-  const raw = readFileSync(new URL('../../../.oxlintrc.json', import.meta.url), 'utf8');
-  // .oxlintrc.json は JSONC（行コメント可）
-  return oxlintrcSchema.parse(JSON.parse(raw.replaceAll(/^\s*\/\/.*$/gmu, '')));
+  return oxlintrcSchema.parse(loadEffectiveOxlintConfig(ROOT_CONFIG));
 }
 
 function severityOf(value: z.infer<typeof severityValueSchema>): string {
@@ -268,5 +276,25 @@ describe('層の依存方向と認可スコープの境界', () => {
       'apps/api/src/repositories/*-table.ts',
       'apps/api/src/lib/auth.ts',
     ]);
+  });
+});
+
+/**
+ * `extends` の意味論そのものを固定する（ADR 0010 の決定 6）。
+ *
+ * oxlint 1.79.0 で実測したところ、`ignorePatterns` だけは継承されない。
+ * base 側に書いても効かないので、書いてあること自体が「除外できているつもり」の
+ * 誤解になる。ここで書かせないことにして、適用範囲はルートに一本化する。
+ */
+describe('extends の適用範囲', () => {
+  it('base 設定に ignorePatterns を置かない（継承されないので効かない）', () => {
+    const base = loadEffectiveOxlintConfig(BASE_CONFIG);
+
+    expect(base['ignorePatterns']).toStrictEqual([]);
+  });
+
+  it('ルートのラッパが実効設定にルール本体を持ち込んでいる', () => {
+    // extends を外すと 0 件になる。ここが 0 なら ⑪ は何も見ていない
+    expect(Object.keys(config.rules).length).toBeGreaterThan(REQUIRED_ERROR_RULES.length);
   });
 });
