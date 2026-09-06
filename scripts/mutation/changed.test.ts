@@ -1,7 +1,7 @@
+import type { CommandOutcome } from '@seri/base-tooling/fitness/exec';
+import { stubRun } from '@seri/base-tooling/test';
 import { describe, expect, it } from 'vitest';
 
-import type { CommandOutcome } from '../fitness/lib/exec.ts';
-import { stubRun } from '../test/temp-repo.ts';
 import { changedFiles, groupByWorkspace } from './changed.ts';
 
 const always = (): boolean => true;

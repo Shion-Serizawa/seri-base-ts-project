@@ -1,14 +1,15 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import type { FitnessContext } from '@seri/base-tooling/fitness/context';
+import { defaultContext } from '@seri/base-tooling/fitness/context';
+import type { CheckResult } from '@seri/base-tooling/fitness/report';
+
 import {
   buildOpenApiDocument,
   OPENAPI_SPEC_PATH,
   serializeOpenApiDocument,
 } from '../../openapi/document.ts';
-import type { FitnessContext } from '../lib/context.ts';
-import { defaultContext } from '../lib/context.ts';
-import type { CheckResult } from '../lib/report.ts';
 
 const NAME = 'openapi drift';
 const EXPECTED = '契約と docs/openapi.json が一致';

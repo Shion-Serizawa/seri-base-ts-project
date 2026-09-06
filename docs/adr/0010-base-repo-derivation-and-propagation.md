@@ -115,6 +115,52 @@ git submodule 案も採らなかった。SHA 固定と `workspaces` がそのま
 **基盤リポジトリ自身もこのパッケージを引く。** ドッグフーディングされるので、
 派生で壊れる前に自分が最初に気づく。
 
+#### 実測で分かった制約: TypeScript のまま配ると Node からは読めない
+
+`@seri/base-tooling` はビルドせず TypeScript のまま配っている。Bun はこれをそのまま
+実行できるが、**Node は `node_modules` 配下の `.ts` を型除去しない**
+（`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`）。どこが引っかかるかを切り分けた。
+
+| 読み込む側                                    | 結果         | 理由                                      |
+| --------------------------------------------- | ------------ | ----------------------------------------- |
+| テストファイルからの `import`                 | 通る         | Vitest（Vite）が変換する                  |
+| `bun run scripts/...`                         | 通る         | Bun のランタイム                          |
+| `.oxlintrc.json` / `tsconfig.json` の extends | 通る         | JSON なので実行されない                   |
+| **`vitest.config.ts`**                        | **通らない** | Vite の設定ローダーは Node が直接実行する |
+
+境界は `vitest.config.ts` 1 か所だけだった。3 つの案を検討した。
+
+1. **ビルド成果物を配る**（`dist` をコミットし、`src` との乖離をゲートで見る）— 最も
+   一般的だが、ビルド手段（TypeScript 7 は emit が不透明）と乖離検査を新たに背負う
+2. **`bunfig.toml` に `[run] bun = true`** を入れて Bun のランタイムを強制する — 1 行で
+   済むが、**実際に試すと zod の解決が変わって `z.uuid is not a function` になった**。不採用
+3. **しきい値だけ JSON でも配る** — `QUALITY_GATES` の数値を `quality-gates.json` として
+   持ち、`vitest.config.ts` はそれだけを読む
+
+**3 を採った。** 乖離させてはいけないのは「しきい値」であって、Vitest の設定を組み立てる
+関数そのものではない。`createVitestConfig` は使う側にローカルで持たせる
+（除外パスなどはどのみちプロジェクトごとに違う）。将来ビルド成果物を配るようになったら
+共有に戻せる。
+
+`lefthook.yml` と Claude Code のフックは `node` から `bun` に変えた。パッケージを
+import するスクリプトは Bun でしか動かない。`bun` が PATH に無い環境では失敗するが、
+失敗は push を止めるので黙って素通りはしない。
+
+#### 実測で分かった制約: private リポジトリは git 依存で引けない
+
+| 方式                           | 結果                                                            |
+| ------------------------------ | --------------------------------------------------------------- |
+| `github:owner/repo#SHA`        | 404。Bun は codeload の tarball を取り、`GITHUB_TOKEN` を見ない |
+| `git+https://...`              | 同上（github.com は tarball API に正規化される）                |
+| `git+ssh://git@github.com/...` | clone を試みる。SSH 鍵が GitHub に登録してあれば通る            |
+
+`seri-base-tooling` は **public** にした。中身は汎用の品質ゲートだけで、シークレットも
+ビジネスロジックも入っていない（`secret scan` が「混入なし」を返している）。
+SSH 鍵を使う案は、CI で deploy key か PAT を Secrets に置くことになり、
+**決定 3 で「資格情報という攻撃面を作らない」と決めた利点が一部失われる**ので採らなかった。
+
+基盤リポジトリ（`seri-base-ts-project`）は private のままである。public なのは A 層だけ。
+
 ### 4. 適応度関数は「枠組み + 汎用検査」と「プロジェクトの形に依存する検査」に割る
 
 A 層に移せるかは、検査がリポジトリの**形**を知っているかで決まる。実際に依存を見ると

@@ -5,10 +5,16 @@
 #   pre-push    … リポジトリ全体。型情報つき Lint・型検査・全テスト・適応度関数
 #   commit-msg  … Conventional Commits 形式のチェック
 #
-# 実行コマンドは `node` と `node_modules/.bin/*` に限定している。
-# フックのシェルからは `bun` が PATH 上に無い環境（バージョン管理ツールのシムが
-# シェル統合前提の場合など）があり、`bun run ...` だと環境依存で壊れるため。
-# TypeScript のスクリプトは Node 24 のネイティブ型ストリッピングで直接実行する。
+# 実行コマンドは `bun` と `node_modules/.bin/*` に限定している。
+#
+# 以前は `node` で TypeScript を直接実行していた（Node 24 のネイティブ型ストリッピング）が、
+# 品質ゲートの本体を `@seri/base-tooling` に移してから使えなくなった。
+# **Node は node_modules 配下の .ts を型除去できない**
+# （ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING）。パッケージを import する
+# スクリプトは bun で走らせるしかない。
+#
+# `bun` が PATH 上に無い環境ではこれらのジョブが失敗するが、失敗は push を止めるので
+# 黙って素通りはしない（ゲートが 1 本だけ静かに死ぬのが最も危険な壊れ方）。
 #
 # 緊急時は `git commit --no-verify` / `git push --no-verify` で回避できるが、CI で必ず捕まる。
 
@@ -26,12 +32,12 @@ pre-commit:
 
     - name: supply-chain
       glob: '{package.json,bunfig.toml,mise.toml,.github/workflows/*.yml}'
-      run: node scripts/fitness/supply-chain.ts
+      run: bun run scripts/fitness/supply-chain.ts
 
 commit-msg:
   jobs:
     - name: conventional commits
-      run: node scripts/git/check-commit-message.ts {1}
+      run: bun run scripts/git/check-commit-message.ts {1}
 
 pre-push:
   parallel: false
@@ -64,4 +70,4 @@ pre-push:
       run: node_modules/.bin/turbo run build
 
     - name: fitness functions
-      run: node scripts/fitness/run.ts
+      run: bun run scripts/fitness/run.ts

@@ -1,27 +1,21 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-
+import { contextOf, makeTempRepo, repositoryConfigFiles } from '@seri/base-tooling/test';
 import { describe, expect, it } from 'vitest';
 
-import { contextOf, makeTempRepo } from '../../test/temp-repo.ts';
 import { checkLayerBoundary } from './layer-boundary.ts';
 
-const REPO_ROOT = join(import.meta.dirname, '..', '..', '..');
+const ROOT_CONFIG = '.oxlintrc.json';
 
 /**
  * 実物の `.oxlintrc.json` を持ち込んだ擬似リポジトリ。
  *
  * 層のポリシーは「6 ブロックの出現順・対象ファイル・許可先の完全一致」なので、
  * フィクスチャを手書きすると実物とは別のものを検査することになる。
+ * `extends` 先も一緒に運ぶ（置き場所は `repositoryConfigFiles` が設定から辿る）。
  */
 function repoWithConfig(edit: (config: string) => string = (config) => config): string {
-  return makeTempRepo({
-    '.oxlintrc.json': edit(readFileSync(join(REPO_ROOT, '.oxlintrc.json'), 'utf8')),
-    'tooling/quality-gates/oxlint-base.json': readFileSync(
-      join(REPO_ROOT, 'tooling/quality-gates/oxlint-base.json'),
-      'utf8',
-    ),
-  });
+  const files = repositoryConfigFiles();
+  files[ROOT_CONFIG] = edit(files[ROOT_CONFIG] ?? '');
+  return makeTempRepo(files);
 }
 
 function detailsOf(root: string): string {

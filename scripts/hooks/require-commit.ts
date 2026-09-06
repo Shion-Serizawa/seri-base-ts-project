@@ -1,4 +1,5 @@
-import { runCommand } from '../fitness/lib/exec.ts';
+import { runCommand } from '@seri/base-tooling/fitness/exec';
+
 import { decide, parseStopInput } from './uncommitted.ts';
 
 /**

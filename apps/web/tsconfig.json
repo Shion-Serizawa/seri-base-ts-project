@@ -1,4 +1,4 @@
 {
-  "extends": "@seri/tsconfig/react.json",
+  "extends": "@seri/base-tooling/tsconfig/react.json",
   "include": ["src", "test", "vite.config.ts", "vitest.config.ts"]
 }

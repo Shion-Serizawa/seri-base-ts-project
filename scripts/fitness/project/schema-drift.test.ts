@@ -1,7 +1,7 @@
+import type { CommandOutcome, RunCommand } from '@seri/base-tooling/fitness/exec';
+import { contextOf, makeTempRepo, stubRun } from '@seri/base-tooling/test';
 import { describe, expect, it } from 'vitest';
 
-import { contextOf, makeTempRepo, stubRun } from '../../test/temp-repo.ts';
-import type { CommandOutcome, RunCommand } from '../lib/exec.ts';
 import { checkSchemaDrift } from './schema-drift.ts';
 
 const OK = { status: 0 };

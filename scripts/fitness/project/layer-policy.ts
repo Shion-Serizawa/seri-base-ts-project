@@ -2,7 +2,7 @@
  * 層の依存方向（適応度関数 ⑦）と認可スコープの境界（⑭）。
  *
  * ADR 0010 の C 層。`@seri/contract` / `@seri/db` といったこのテンプレート固有の
- * ワークスペース名を直接持つので、`@seri/quality-gates`（A 層）には置けない。
+ * ワークスペース名を直接持つので、@seri/base-tooling（A 層）には置けない。
  * 派生リポジトリは自分の層構成をここに書く。
  *
  * `.oxlintrc.json` の `overrides` に書いた `no-restricted-imports` を、

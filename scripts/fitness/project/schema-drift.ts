@@ -1,11 +1,11 @@
 import { join } from 'node:path';
 
-import { localBin } from '../lib/bin.ts';
-import type { FitnessContext } from '../lib/context.ts';
-import { defaultContext } from '../lib/context.ts';
-import type { CommandOutcome } from '../lib/exec.ts';
-import { outputLines } from '../lib/exec.ts';
-import type { CheckResult } from '../lib/report.ts';
+import { localBin } from '@seri/base-tooling/fitness/bin';
+import type { FitnessContext } from '@seri/base-tooling/fitness/context';
+import { defaultContext } from '@seri/base-tooling/fitness/context';
+import type { CommandOutcome } from '@seri/base-tooling/fitness/exec';
+import { outputLines } from '@seri/base-tooling/fitness/exec';
+import type { CheckResult } from '@seri/base-tooling/fitness/report';
 
 const MIGRATIONS_PATH = 'packages/db/migrations';
 const GENERATE_TIMEOUT_MS = 60_000;

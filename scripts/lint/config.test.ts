@@ -2,9 +2,8 @@ import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { makeTempRepo } from '@seri/base-tooling/test';
 import { describe, expect, it } from 'vitest';
-
-import { makeTempRepo } from '../test/temp-repo.ts';
 
 const configPath = fileURLToPath(new URL('../../.oxlintrc.json', import.meta.url));
 const cliPath = fileURLToPath(new URL('../../node_modules/oxlint/bin/oxlint', import.meta.url));

@@ -1,12 +1,13 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import type { FitnessContext } from '@seri/base-tooling/fitness/context';
+import { defaultContext } from '@seri/base-tooling/fitness/context';
+import type { CommandOutcome } from '@seri/base-tooling/fitness/exec';
+import { outputLines } from '@seri/base-tooling/fitness/exec';
+import type { CheckResult } from '@seri/base-tooling/fitness/report';
+
 import { OPENAPI_SPEC_PATH } from '../../openapi/document.ts';
-import type { FitnessContext } from '../lib/context.ts';
-import { defaultContext } from '../lib/context.ts';
-import type { CommandOutcome } from '../lib/exec.ts';
-import { outputLines } from '../lib/exec.ts';
-import type { CheckResult } from '../lib/report.ts';
 
 const NAME = 'openapi breaking';
 const EXPECTED = '破壊的変更が無い、または宣言済み';

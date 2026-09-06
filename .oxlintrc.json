@@ -4,11 +4,11 @@
   // ---------------------------------------------------------------------------
   // リポジトリの形を知っている部分だけをここに置く（ADR 0010 の C 層）。
   //
-  // カテゴリ・プラグイン・ルール本体は `@seri/quality-gates` 側の base 設定にある。
+  // カテゴリ・プラグイン・ルール本体は @seri/base-tooling が配っている base 設定にある。
   // ここを空にしても lint が緩まないよう、⑪ は extends を解決した**実効設定**に対して
-  // ポリシーを検証する（tooling/quality-gates/src/oxlint-config.ts）。
+  // ポリシーを検証する（scripts/fitness の ⑪）。
   // ---------------------------------------------------------------------------
-  "extends": ["./tooling/quality-gates/oxlint-base.json"],
+  "extends": ["./node_modules/@seri/base-tooling/src/oxlint/base.json"],
 
   "overrides": [
     {

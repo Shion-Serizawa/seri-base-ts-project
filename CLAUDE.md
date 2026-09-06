@@ -9,7 +9,9 @@
 ## 前提
 
 - ドキュメント・コメント・コミットメッセージはすべて**日本語**で書く
-- Bun + Turborepo の monorepo。`apps/{web,api}` / `packages/{contract,domain,db}` / `tooling/*` / `scripts/`
+- Bun + Turborepo の monorepo。`apps/{web,api}` / `packages/{contract,domain,db}` / `scripts/`
+- **品質ゲートの本体は `@seri/base-tooling`**（別リポジトリ・git 依存・SHA 固定）。
+  このリポジトリに残っているのは「リポジトリの形を知っている検査」だけ（ADR 0010）
 - Cloudflare Workers + D1。API は oRPC の contract-first
 
 ## 守る境界
@@ -24,12 +26,17 @@ lint や型で落ちるものばかりだが、落ちてから直すと手戻り
 - **新しい oRPC 手続きは `os`（認証済みビルダー）から実装する。** 通さないと `context.userId` が
   無くコンパイルできない。リポジトリ層のクエリはセッションのユーザーでスコープし、
   他人のリソースは存在を漏らさないため `NOT_FOUND` を返す
-- **しきい値は `tooling/quality-gates/src/index.ts` が単一情報源。** 外部設定
-  （`tooling/quality-gates/oxlint-base.json` / `stryker.config.json` / `.jscpd.json`）にも
-  書く数値は両方直す（片方だけだと `tooling/quality-gates` のテストが落ちる）
-- **lint のルール本体は `tooling/quality-gates/oxlint-base.json` にある。** ルートの
+- **しきい値は `@seri/base-tooling` の `QUALITY_GATES` が単一情報源。** 外部設定
+  （`stryker.config.json` / `.jscpd.json`）にも書く数値は両方直す
+  （片方だけだと適応度関数 `threshold drift` が落ちる）
+- **lint のルール本体は `@seri/base-tooling` の base 設定にある。** ルートの
   `.oxlintrc.json` はそれを `extends` する薄いラッパで、層の依存方向と適用範囲だけを持つ
   （ADR 0010）。`ignorePatterns` は extends で継承されないのでルートに書く
+- **`@seri/base-tooling` を import するスクリプトは `bun` で実行する。** Node は
+  `node_modules` 配下の `.ts` を型除去できない。`vitest.config.ts` だけは Node が読むので、
+  しきい値を JSON で引く（`vitest.shared.ts` にまとめてある）
+- **A 層を直したくなったら `seri-base-tooling` を直して SHA を上げる。** このリポジトリで
+  検査の枠組みを書き足さない
 - **公開 API を破壊的に変えるときはコミットで宣言する**（`!` か `BREAKING CHANGE:`）。
   破壊的なマイグレーションは SQL ファイルに `-- destructive: <理由>` を書く。
   どちらも宣言が無いと ⑯ ⑰ が FAIL する

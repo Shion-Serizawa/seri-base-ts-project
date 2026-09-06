@@ -1,3 +1,4 @@
+import { contextOf, makeTempRepo } from '@seri/base-tooling/test';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -5,7 +6,6 @@ import {
   OPENAPI_SPEC_PATH,
   serializeOpenApiDocument,
 } from '../../openapi/document.ts';
-import { contextOf, makeTempRepo } from '../../test/temp-repo.ts';
 import { checkOpenApiDrift } from './openapi-drift.ts';
 
 async function currentSpec(): Promise<string> {

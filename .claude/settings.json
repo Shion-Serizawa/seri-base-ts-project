@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/post-edit.ts\"",
+            "command": "bun run \"$CLAUDE_PROJECT_DIR/scripts/hooks/post-edit.ts\"",
             "timeout": 10
           }
         ]
@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/require-commit.ts\"",
+            "command": "bun run \"$CLAUDE_PROJECT_DIR/scripts/hooks/require-commit.ts\"",
             "timeout": 15
           }
         ]

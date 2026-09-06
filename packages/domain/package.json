@@ -15,7 +15,6 @@
     "@seri/contract": "workspace:*"
   },
   "devDependencies": {
-    "@seri/tsconfig": "workspace:*",
-    "@seri/vitest-config": "workspace:*"
+    "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081"
   }
 }

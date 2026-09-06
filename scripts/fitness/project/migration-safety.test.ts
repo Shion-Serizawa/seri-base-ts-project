@@ -1,6 +1,6 @@
+import { contextOf, makeTempRepo } from '@seri/base-tooling/test';
 import { describe, expect, it } from 'vitest';
 
-import { contextOf, makeTempRepo } from '../../test/temp-repo.ts';
 import { checkMigrationSafety } from './migration-safety.ts';
 
 const MIGRATION = 'packages/db/migrations/0000_init.sql';

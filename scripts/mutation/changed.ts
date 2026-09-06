@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { RunCommand } from '../fitness/lib/exec.ts';
+import type { RunCommand } from '@seri/base-tooling/fitness/exec';
 
 const SOURCE_PATTERN = /^(apps|packages)\/([^/]+)\/src\/.+\.tsx?$/u;
 const TEST_PATTERN = /\.(?:test|spec)\.tsx?$/u;

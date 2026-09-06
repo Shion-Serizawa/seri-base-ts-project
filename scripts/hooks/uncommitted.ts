@@ -1,4 +1,4 @@
-import type { CommandOutcome } from '../fitness/lib/exec.ts';
+import type { CommandOutcome } from '@seri/base-tooling/fitness/exec';
 
 /**
  * Claude Code の `Stop` フックの判定。

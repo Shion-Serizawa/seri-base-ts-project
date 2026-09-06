@@ -1,3 +1,5 @@
+import type { CommandOutcome } from '@seri/base-tooling/fitness/exec';
+import { contextOf, makeTempRepo, repositoryConfigFiles, stubRun } from '@seri/base-tooling/test';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -5,8 +7,6 @@ import {
   OPENAPI_SPEC_PATH,
   serializeOpenApiDocument,
 } from '../../openapi/document.ts';
-import { contextOf, makeTempRepo, repositoryConfigFiles, stubRun } from '../../test/temp-repo.ts';
-import type { CommandOutcome } from '../lib/exec.ts';
 import { collectProjectChecks } from './checks.ts';
 
 /**

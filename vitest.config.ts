@@ -1,5 +1,6 @@
-import { createVitestConfig } from '@seri/vitest-config';
 import { defineConfig } from 'vitest/config';
+
+import { createVitestConfig } from './vitest.shared.ts';
 
 /**
  * ルートワークスペース（`scripts/**`）のテスト設定。
@@ -23,8 +24,6 @@ export default defineConfig(
       'scripts/review/run-plan.ts',
       'scripts/hooks/require-commit.ts',
       'scripts/hooks/post-edit.ts',
-      // テスト専用のフィクスチャヘルパ
-      'scripts/test/**',
     ],
   }),
 );
