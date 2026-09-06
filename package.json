@@ -22,6 +22,7 @@
     "lint:quick": "oxlint",
     "mutation": "bun run scripts/mutation/run-changed.ts",
     "openapi:generate": "bun run scripts/openapi/write-spec.ts",
+    "review:plan": "bun run scripts/review/run-plan.ts",
     "prepare": "lefthook install && bun run --filter @seri/api cf-typegen",
     "test": "turbo run test \"//#test:scripts\"",
     "test:coverage": "turbo run test:coverage \"//#test:scripts:coverage\"",

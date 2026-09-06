@@ -27,6 +27,9 @@ lint や型で落ちるものばかりだが、落ちてから直すと手戻り
 - **しきい値は `tooling/quality-gates/src/index.ts` が単一情報源。** 外部設定
   （`.oxlintrc.json` / `stryker.config.json` / `.jscpd.json`）にも書く数値は両方直す
   （片方だけだと `tooling/quality-gates` のテストが落ちる）
+- **公開 API を破壊的に変えるときはコミットで宣言する**（`!` か `BREAKING CHANGE:`）。
+  破壊的なマイグレーションは SQL ファイルに `-- destructive: <理由>` を書く。
+  どちらも宣言が無いと ⑯ ⑰ が FAIL する
 - **ゲートに詰まったら設定を緩めるのではなく実装を直す。** 適応度関数 ⑪ が lint 設定の
   改ざん（`"correctness": "off"` など）を検出する
 
@@ -37,6 +40,7 @@ lint や型で落ちるものばかりだが、落ちてから直すと手戻り
 | `packages/contract` の契約  | `bun run openapi:generate`（`docs/openapi.json` もコミット。忘れると ⑫ が FAIL） |
 | `packages/db/src/schema.ts` | `bun run --filter @seri/db db:generate`（忘れると ⑩ が FAIL）                    |
 | push する前                 | `bun run fitness`（pre-push でも走るが、詰まる前に手で回す）                     |
+| 実装が一段落した            | `bun run review:plan` → `/quality-review`                                        |
 | `scripts/` を触った         | `bun run test:scripts`                                                           |
 
 主要な変更のあとは `bun run lint`（型情報つき）と `bun run typecheck` も通す。
@@ -48,10 +52,14 @@ lint や型で落ちるものばかりだが、落ちてから直すと手戻り
 
 - **決定論的ゲートの結果だけを「通った」の根拠にする。** 実際の終了コードと出力を見ずに
   「テストは通りました」と書かない
-- **実装が一段落したら `/code-review` を独立したコンテキストで回す**（環境側のプラグイン依存。
-  リポジトリには実体が無い）。 見るのは
-  「仕様との一致」「ADR の判断に反していないか」「ゲートが鳴らない種類の劣化」。
-  決定論的に検出できるものはゲートに任せ、二重にやらない
+- **実装が一段落したら `/quality-review` を回す。** 変更内容から起動すべき観点を
+  `bun run review:plan` が決め、観点ごとに独立したサブエージェントで見る。
+  観点を 1 つのコンテキストで混ぜると見落とす。決定論的に検出できるものは
+  ゲートに任せ、二重にやらない
+- **起動する観点を自分で間引かない。** 判定は `scripts/review/route.ts` の純関数。
+  間引くと「実施済み・指摘なし」になり、それを検出する手段が無い
+- 組み込みの `/code-review` は観点を渡せない（対象と effort だけ）ので、
+  バグ検出の 1 本として**併用**する。置き換えない
 - **同じ失敗を 3 回繰り返したら止めて相談する。** ゲートを緩める・テストを消す・
   `// @ts-expect-error` を足すで通そうとしない
 - **判断は ADR に残す。** しきい値の変更、ゲートの追加・削除、層の依存の変更、
@@ -61,6 +69,7 @@ lint や型で落ちるものばかりだが、落ちてから直すと手戻り
 
 - API 手続きの追加 → `/add-procedure`
 - 適応度関数の追加 → `/add-fitness-check`
+- 実装後の品質レビュー → `/quality-review`
 
 ## 参照
 
@@ -73,5 +82,7 @@ lint や型で落ちるものばかりだが、落ちてから直すと手戻り
 - [docs/adr/0006-openapi-generation.md](docs/adr/0006-openapi-generation.md) — OpenAPI の生成と乖離ゲート
 - [docs/adr/0007-ai-coding-context.md](docs/adr/0007-ai-coding-context.md) — この文書とスキルを置いた理由、入れなかったもの
 - [docs/adr/0008-stricter-lint.md](docs/adr/0008-stricter-lint.md) — AI Coding 向けの Lint 強化と、個別採用にした理由
+- [docs/adr/0009-iso25010-review-layer.md](docs/adr/0009-iso25010-review-layer.md) — ISO/IEC 25010 の使い方とレビュー層
+- [docs/quality/iso25010.md](docs/quality/iso25010.md) — レビュー観点（ゲートが見ないものだけ）
 
 未着手（意図的に後回し）にしているものは README の「未着手」節にある。着手する前に読むこと。
