@@ -47,7 +47,15 @@ pre-push:
 
     # 適応度関数の実装（scripts/）自体のテストも含める。
     # `//#` はルートワークスペースのタスクを指す turbo の記法。
+    #
+    # MSYS2_ARG_CONV_EXCL が要るのは Windows のため。lefthook は Git for Windows の
+    # sh.exe でジョブを走らせ、MSYS は `/` で始まる引数をパスとみなして変換する。
+    # `//#test:scripts:coverage` が `/#test:scripts:coverage` になり、turbo が
+    # 「package `/` が無い」で落ちていた（このジョブだけが pre-push で失敗し、
+    # 他は全部緑なので、ゲートが 1 本通っていないことに気づきにくい）。
     - name: test with coverage
+      env:
+        MSYS2_ARG_CONV_EXCL: '*'
       run: node_modules/.bin/turbo run test:coverage '//#test:scripts:coverage'
 
     # 適応度関数のバンドルサイズ検査は dist を見るため、先にビルドする
