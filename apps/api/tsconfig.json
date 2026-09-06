@@ -1,5 +1,5 @@
 {
-  "extends": "@seri/base-tooling/tsconfig/base.json",
+  "extends": "../../node_modules/@seri/base-tooling/src/tsconfig/base.json",
   "compilerOptions": {
     "types": ["./worker-configuration.d.ts", "@cloudflare/vitest-pool-workers/types"]
   },
