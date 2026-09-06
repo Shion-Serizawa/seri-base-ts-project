@@ -1,8 +1,21 @@
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import { adviceFor, formatAdvice, parseEditedPaths } from './edit-advice.ts';
 
-const ROOT = 'd:/Shion/work2/AI-Coding/seri-base-ts-project';
+/**
+ * リポジトリのルート。固定文字列にしていたものを実際の位置から求めるように変えた。
+ *
+ * 助言のルールが指すパスは、**実在しなければ永久に発火しない**。
+ * 実際に `tooling/quality-gates/src/**` を指したまま実体が A 層へ移動した時期があり、
+ * このテストも同じ古いパスで「発火する」ことを検証していたため緑のまま通っていた。
+ * ゲートが黙って緑になるのと同じ壊れ方なので、実在の確認を助言の検証と同じ表に置く。
+ */
+const ROOT = fileURLToPath(new URL('../../', import.meta.url))
+  .replaceAll('\\', '/')
+  .replace(/\/$/u, '');
 
 /** 助言を理由だけに潰して比較しやすくする。 */
 function reasonsOf(filePaths: readonly string[]): string[] {
@@ -33,22 +46,15 @@ describe('parseEditedPaths', () => {
 });
 
 describe('adviceFor', () => {
-  it('契約を変えたら OpenAPI の再生成を促す', () => {
-    expect(reasonsOf([`${ROOT}/packages/contract/src/todo.ts`])).toStrictEqual([
-      'API 契約を変更しました',
-    ]);
-  });
-
-  it('DB スキーマを変えたらマイグレーション生成を促す', () => {
-    expect(reasonsOf([`${ROOT}/packages/db/src/schema.ts`])).toStrictEqual([
-      'DB スキーマを変更しました',
-    ]);
-  });
-
-  it('しきい値を変えたら README と ADR への追記を促す', () => {
-    expect(reasonsOf([`${ROOT}/tooling/quality-gates/src/index.ts`])).toStrictEqual([
-      '品質ゲートのしきい値かポリシーを変更しました',
-    ]);
+  it.each([
+    ['packages/contract/src/todo.ts', 'API 契約を変更しました'],
+    ['packages/db/src/schema.ts', 'DB スキーマを変更しました'],
+    ['stryker.config.json', '品質ゲートのしきい値（二重管理している側）を変更しました'],
+    ['.jscpd.json', '品質ゲートのしきい値（二重管理している側）を変更しました'],
+    ['scripts/fitness/project/layer-policy.ts', '層の依存方向か認可スコープの境界を変更しました'],
+  ])('%s は実在し、その編集が助言を発火させる', (relative, reason) => {
+    expect(existsSync(`${ROOT}/${relative}`)).toBe(true);
+    expect(reasonsOf([`${ROOT}/${relative}`])).toStrictEqual([reason]);
   });
 
   it('Windows の \\ 区切りでも判定できる', () => {

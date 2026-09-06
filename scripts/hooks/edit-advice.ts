@@ -44,11 +44,24 @@ const RULES: readonly Rule[] = [
     },
   },
   {
-    matches: /(^|\/)tooling\/quality-gates\/src\/.+\.ts$/u,
+    // しきい値の単一情報源は `@seri/base-tooling` の QUALITY_GATES（A 層）で、
+    // このリポジトリからは直せない。ここで拾うのは**その数値を写している外部設定**の側。
+    // 片方だけ緩めるのが最も安易な抜け道なので、⑪′ が鳴る前にその場で促す。
+    matches: /(^|\/)(?:stryker\.config\.json|\.jscpd\.json)$/u,
     advice: {
-      reason: '品質ゲートのしきい値かポリシーを変更しました',
+      reason: '品質ゲートのしきい値（二重管理している側）を変更しました',
       action:
-        'README.md の品質ゲートの表と docs/adr/0002-fitness-functions.md に、変更した理由と牽制関係を追記してください',
+        '`@seri/base-tooling` の QUALITY_GATES と数値が一致しているか確認し、README.md の品質ゲートの表と docs/adr/0002-fitness-functions.md に理由と牽制関係を追記してください（適応度関数 ⑪′ が乖離を検出します）',
+    },
+  },
+  {
+    // 層の依存方向と認可スコープの境界の宣言。`.oxlintrc.json` の overrides と
+    // 完全一致でなければならないので、片方だけ直した状態で止まらないようにする。
+    matches: /(^|\/)scripts\/fitness\/project\/layer-policy\.ts$/u,
+    advice: {
+      reason: '層の依存方向か認可スコープの境界を変更しました',
+      action:
+        '.oxlintrc.json の overrides を同じ内容（出現順・対象ファイル・許可先）に直し、docs/adr/ に判断を残してください（適応度関数 ⑦ ⑭ ⑪″ が不一致を検出します）',
     },
   },
 ];
