@@ -52,3 +52,24 @@ export function contextOf(
 ): FitnessContext {
   return { root, run, ci, baseRef };
 }
+
+/**
+ * A 層の検査（`collectBaseChecks`）がすべて PASS になる擬似リポジトリ。
+ *
+ * 契約・マイグレーション・`docs/openapi.json` を置いていないのは、それらを読むのが
+ * `project/checks.ts` の側だから（ADR 0010 の C 層）。ここに置く必要が出たら、
+ * A 層に「リポジトリの形」の知識が漏れているということになる。
+ */
+export function makeHealthyBaseRepo(): string {
+  return makeTempRepo({
+    'package.json': JSON.stringify({ name: 'root', devDependencies: { knip: '6.32.2' } }),
+    'bunfig.toml': '[install]\nexact = true\nminimumReleaseAge = 604800\n',
+    'bun.lock': '',
+    'mise.lock': '',
+    '.github/workflows/ci.yml': `      - uses: actions/checkout@${'a'.repeat(40)}\n`,
+    'apps/api/dist/worker.js': 'console.log(1);',
+    'apps/web/dist/main.js': 'console.log(2);',
+    'packages/domain/src/todo.ts': 'const a = 1;\n',
+    'CLAUDE.md': '`packages/domain/src/todo.ts` を見る。\n',
+  });
+}
