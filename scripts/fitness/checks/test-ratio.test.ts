@@ -4,9 +4,19 @@ import { contextOf, makeTempRepo } from '../../test/temp-repo.ts';
 import type { CheckResult } from '../lib/report.ts';
 import { checkTestRatio } from './test-ratio.ts';
 
+/**
+ * ワークスペースの束かどうかは、ルートの `package.json` の `workspaces` から決まる。
+ * 領域名を決め打ちにすると、レイアウトの違う派生リポジトリで対象が 0 件になる。
+ */
+const ROOT_MANIFEST = JSON.stringify({
+  name: 'root',
+  workspaces: ['apps/*', 'packages/*', 'tooling/*'],
+});
+
 /** 実装 n 行・テスト m 行のワークスペースを作る。 */
 function workspaceOf(implementation: number, test: number): Readonly<Record<string, string>> {
   return {
+    'package.json': ROOT_MANIFEST,
     'packages/domain/src/todo.ts': 'const a = 1;\n'.repeat(implementation),
     'packages/domain/src/todo.test.ts': 'expect(1).toBe(1);\n'.repeat(test),
   };
@@ -58,6 +68,7 @@ describe('checkTestRatio', () => {
   it('apps / packages はワークスペース単位に分けて内訳を出す', () => {
     const details = detailsOf(
       checkOf({
+        'package.json': ROOT_MANIFEST,
         'apps/api/src/a.ts': 'const a = 1;\n',
         'packages/domain/src/b.ts': 'const b = 1;\n',
       }),

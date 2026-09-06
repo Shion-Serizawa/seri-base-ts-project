@@ -137,8 +137,12 @@ function scriptNames(packageJson: Record<string, unknown>): Set<string> {
  * ワークスペースに依存しているだけの package.json（`"@seri/db": "workspace:*"`）を
  * 先に拾ってしまい、無関係な scripts を「存在する」と誤答する。
  */
-function workspaceScripts(root: string, workspace: string): Set<string> {
-  for (const group of ['apps', 'packages', 'tooling']) {
+function workspaceScripts(
+  root: string,
+  workspace: string,
+  sourceRoots: readonly string[],
+): Set<string> {
+  for (const group of sourceRoots) {
     if (!existsSync(join(root, group))) {
       continue;
     }
@@ -153,7 +157,7 @@ function workspaceScripts(root: string, workspace: string): Set<string> {
 }
 
 /** 文書が案内している `bun run` のうち、存在しないスクリプトを返す。 */
-function missingScripts(root: string, document: string): string[] {
+function missingScripts(root: string, document: string, sourceRoots: readonly string[]): string[] {
   const text = readFileSync(document, 'utf8');
   const missing: string[] = [];
 
@@ -163,7 +167,7 @@ function missingScripts(root: string, document: string): string[] {
     const available =
       workspace === undefined
         ? scriptNames(readPackageJson(join(root, 'package.json')))
-        : workspaceScripts(root, workspace);
+        : workspaceScripts(root, workspace, sourceRoots);
     if (!available.has(script)) {
       missing.push(
         workspace === undefined ? `bun run ${script}` : `bun run --filter ${workspace} ${script}`,
@@ -209,7 +213,7 @@ export function checkContextDrift(context: FitnessContext = defaultContext()): C
     const label = relative(context.root, document).replaceAll('\\', '/');
     const broken = [
       ...missingPaths(context.root, document),
-      ...missingScripts(context.root, document),
+      ...missingScripts(context.root, document, context.sourceRoots),
     ];
     return broken.map((item) => `${label}: ${item} が存在しない`);
   });

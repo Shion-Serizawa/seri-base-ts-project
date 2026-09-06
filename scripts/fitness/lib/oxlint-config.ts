@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 export type JsonObject = Record<string, unknown>;
@@ -11,14 +11,24 @@ function isArray(value: unknown): value is unknown[] {
   return Array.isArray(value);
 }
 
-/** `.oxlintrc.json` は JSONC（行コメント可）。 */
+/**
+ * `.oxlintrc.json` は JSONC（行コメント可）。
+ *
+ * 読めない・壊れているときは空として扱う。ここで例外を投げると、`extends` 先を
+ * 消しただけで `bun run fitness` 全体が未捕捉の例外で死に、他のゲートの結果ごと
+ * 失われる。空にすればルールが丸ごと欠けるので、⑪ が不一致として FAIL する。
+ */
 function readJsonc(path: string): JsonObject {
-  const raw: string = readFileSync(path, 'utf8');
-  const parsed: unknown = JSON.parse(raw.replaceAll(/^\s*\/\/.*$/gmu, ''));
-  if (!isRecord(parsed)) {
-    throw new Error(`${path} が JSON オブジェクトではない`);
+  if (!existsSync(path)) {
+    return {};
   }
-  return parsed;
+  try {
+    const raw: string = readFileSync(path, 'utf8');
+    const parsed: unknown = JSON.parse(raw.replaceAll(/^\s*\/\/.*$/gmu, ''));
+    return isRecord(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 export function objectAt(config: JsonObject, key: string): JsonObject {
@@ -93,17 +103,13 @@ export function stringsAt(config: JsonObject, key: string): string[] {
 }
 
 /**
- * `extends` 先が宣言している `ignorePatterns` を集める。
+ * 設定ファイル自身が宣言している `ignorePatterns`（`extends` は辿らない）。
  *
- * 実測どおり oxlint はこれを継承しない。つまり書いても効かないのに、書いた側は
- * 「除外できている」と思い込む。1 件でもあれば違反として報告する。
+ * 実測どおり oxlint は `ignorePatterns` を継承しない。つまり `extends` 先に書いても
+ * 効かないのに、書いた側は「除外できている」と思い込む。⑪ はこれを違反として見る。
  */
-export function ignorePatternsInExtends(configPath: string): string[] {
-  const own = readJsonc(configPath);
-  return stringsAt(own, 'extends').flatMap((entry) => {
-    const target = resolve(dirname(configPath), entry);
-    return stringsAt(readJsonc(target), 'ignorePatterns').concat(ignorePatternsInExtends(target));
-  });
+export function ownIgnorePatterns(configPath: string): string[] {
+  return stringsAt(readJsonc(configPath), 'ignorePatterns');
 }
 
 export type OxlintOverride = { readonly files: readonly string[]; readonly rules: JsonObject };
@@ -113,4 +119,18 @@ export function overridesOf(config: JsonObject): OxlintOverride[] {
   return arrayAt(config, 'overrides')
     .filter((entry): entry is JsonObject => isRecord(entry))
     .map((entry) => ({ files: stringsAt(entry, 'files'), rules: objectAt(entry, 'rules') }));
+}
+
+/**
+ * `extends` で参照している設定ファイルの絶対パスを、再帰的に集める。
+ *
+ * 検査そのものではなくテストのフィクスチャが使う。基盤リポジトリは
+ * `tooling/quality-gates/oxlint-base.json`、派生は `node_modules` の中と
+ * 置き場所が違うので、パスを書かずに設定から辿る。
+ */
+export function extendsTargets(configPath: string): string[] {
+  return stringsAt(readJsonc(configPath), 'extends')
+    .map((entry) => resolve(dirname(configPath), entry))
+    .filter((target) => existsSync(target))
+    .flatMap((target) => [target].concat(extendsTargets(target)));
 }
