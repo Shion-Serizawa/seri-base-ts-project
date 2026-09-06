@@ -77,6 +77,12 @@ jobs:
         run: bun run build
 
       - name: fitness functions
+        env:
+          # ⑯ は基準リビジョンとの差分で公開 API の破壊的変更を見る。
+          # PR はベースブランチ、push は直前のコミット。④ ミューテーションと同じ形で渡す。
+          # 既定の `origin/main` のままだと、main への push で基準と HEAD が同じになり
+          # 差分が空になる（④ が PR のみで牽制が外れていたのと同じ穴）。
+          FITNESS_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD~1' }}
         run: bun run fitness
 
   mutation:

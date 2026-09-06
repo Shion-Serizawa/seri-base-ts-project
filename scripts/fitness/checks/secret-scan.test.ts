@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { makeTempRepo, stubRun } from '../../test/temp-repo.ts';
+import type { FitnessContext } from '../lib/context.ts';
 import type { CommandOutcome } from '../lib/exec.ts';
 import { checkSecretScan } from './secret-scan.ts';
 
@@ -23,15 +24,14 @@ const onlyHistoryLeaks = installedWith((command) =>
   command.includes('gitleaks git') ? { status: 1, stdout: 'leak' } : FOUND,
 );
 
-function contextOf(
-  run: ReturnType<typeof stubRun>,
-  ci = false,
-): {
-  readonly root: string;
-  readonly run: ReturnType<typeof stubRun>;
-  readonly ci: boolean;
-} {
-  return { root: makeTempRepo({}), run, ci };
+/**
+ * この検査だけ「root は空の一時ディレクトリでよい」ため、ローカルに context を組む。
+ *
+ * 型は `FitnessContext` を使う。構造を書き下すと、フィールドが増えたときに
+ * ここだけ古いまま通ってしまう（実際に `baseRef` を足したときに型検査が止めた）。
+ */
+function contextOf(run: ReturnType<typeof stubRun>, ci = false): FitnessContext {
+  return { root: makeTempRepo({}), run, ci, baseRef: 'main' };
 }
 
 describe('gitleaks の解決', () => {
