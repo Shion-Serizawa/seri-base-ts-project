@@ -12,10 +12,10 @@
         "scripts/hooks/require-commit.ts!",
         "scripts/hooks/post-edit.ts!",
         "scripts/**/*.test.ts",
-        "scripts/test/**",
-        "vitest.config.ts"
+        "vitest.config.ts",
+        "vitest.shared.ts"
       ],
-      "project": ["scripts/**/*.ts!", "vitest.config.ts"]
+      "project": ["scripts/**/*.ts!", "vitest.config.ts", "vitest.shared.ts"]
     },
     "apps/api": {
       "entry": [
@@ -47,12 +47,8 @@
         "drizzle.config.ts"
       ],
       "project": ["src/**/*.ts!"]
-    },
-    "tooling/*": {
-      "entry": ["src/index.ts!", "src/**/*.test.ts", "vitest.config.ts"],
-      "project": ["src/**/*.ts!"]
     }
   },
-  "ignoreDependencies": ["@seri/tsconfig", "cloudflare"],
+  "ignoreDependencies": ["cloudflare"],
   "ignore": ["**/*.gen.ts", "**/worker-configuration.d.ts", ".stryker-tmp/**", "**/.stryker-tmp/**"]
 }

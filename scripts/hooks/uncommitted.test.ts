@@ -1,6 +1,6 @@
+import type { CommandOutcome } from '@seri/base-tooling/fitness/exec';
 import { describe, expect, it } from 'vitest';
 
-import type { CommandOutcome } from '../fitness/lib/exec.ts';
 import type { Decision } from './uncommitted.ts';
 import { decide, parseStopInput } from './uncommitted.ts';
 

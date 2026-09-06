@@ -1,4 +1,4 @@
 {
-  "extends": "@seri/tsconfig/library.json",
+  "extends": "@seri/base-tooling/tsconfig/library.json",
   "include": ["src", "vitest.config.ts", "drizzle.config.ts"]
 }

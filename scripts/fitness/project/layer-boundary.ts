@@ -1,18 +1,19 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { Comparison } from '../lib/compare.ts';
-import { differences } from '../lib/compare.ts';
-import type { FitnessContext } from '../lib/context.ts';
-import { defaultContext } from '../lib/context.ts';
-import type { JsonObject, OxlintOverride } from '../lib/oxlint-config.ts';
+import type { Comparison } from '@seri/base-tooling/fitness/compare';
+import { differences } from '@seri/base-tooling/fitness/compare';
+import type { FitnessContext } from '@seri/base-tooling/fitness/context';
+import { defaultContext } from '@seri/base-tooling/fitness/context';
+import type { JsonObject, OxlintOverride } from '@seri/base-tooling/fitness/oxlint-config';
 import {
   isRecord,
   loadEffectiveOxlintConfig,
   overridesOf,
   stringsAt,
-} from '../lib/oxlint-config.ts';
-import type { CheckResult } from '../lib/report.ts';
+} from '@seri/base-tooling/fitness/oxlint-config';
+import type { CheckResult } from '@seri/base-tooling/fitness/report';
+
 import { DB_REACHABLE_FILES, LAYER_IMPORT_POLICY, WORKSPACE_IMPORT_DENY } from './layer-policy.ts';
 
 const ROOT_CONFIG = '.oxlintrc.json';

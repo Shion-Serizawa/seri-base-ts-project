@@ -1,4 +1,5 @@
-import { runFitness } from './framework.ts';
+import { runFitness } from '@seri/base-tooling/fitness';
+
 import { collectProjectChecks } from './project/checks.ts';
 
 /**

@@ -7,9 +7,8 @@
       "devDependencies": {
         "@orpc/openapi": "1.15.0",
         "@orpc/zod": "1.15.0",
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081",
         "@seri/contract": "workspace:*",
-        "@seri/quality-gates": "workspace:*",
-        "@seri/vitest-config": "workspace:*",
         "@stryker-mutator/core": "10.0.0",
         "@stryker-mutator/vitest-runner": "10.0.0",
         "@types/node": "26.2.0",
@@ -46,8 +45,7 @@
         "@cloudflare/workers-types": "5.20260816.1",
         "@orpc/client": "1.15.0",
         "@orpc/contract": "1.15.0",
-        "@seri/tsconfig": "workspace:*",
-        "@seri/vitest-config": "workspace:*",
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081",
       },
     },
     "apps/web": {
@@ -66,8 +64,7 @@
       },
       "devDependencies": {
         "@orpc/contract": "1.15.0",
-        "@seri/tsconfig": "workspace:*",
-        "@seri/vitest-config": "workspace:*",
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081",
         "@tanstack/router-plugin": "1.168.32",
         "@testing-library/jest-dom": "7.0.1",
         "@testing-library/react": "16.3.2",
@@ -88,8 +85,7 @@
         "zod": "4.4.3",
       },
       "devDependencies": {
-        "@seri/tsconfig": "workspace:*",
-        "@seri/vitest-config": "workspace:*",
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081",
       },
     },
     "packages/db": {
@@ -99,8 +95,7 @@
         "drizzle-orm": "0.45.2",
       },
       "devDependencies": {
-        "@seri/tsconfig": "workspace:*",
-        "@seri/vitest-config": "workspace:*",
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081",
       },
     },
     "packages/domain": {
@@ -110,29 +105,7 @@
         "@seri/contract": "workspace:*",
       },
       "devDependencies": {
-        "@seri/tsconfig": "workspace:*",
-        "@seri/vitest-config": "workspace:*",
-      },
-    },
-    "tooling/quality-gates": {
-      "name": "@seri/quality-gates",
-      "version": "0.0.0",
-      "devDependencies": {
-        "@seri/tsconfig": "workspace:*",
-      },
-    },
-    "tooling/tsconfig": {
-      "name": "@seri/tsconfig",
-      "version": "0.0.0",
-    },
-    "tooling/vitest-config": {
-      "name": "@seri/vitest-config",
-      "version": "0.0.0",
-      "dependencies": {
-        "@seri/quality-gates": "workspace:*",
-      },
-      "devDependencies": {
-        "@seri/tsconfig": "workspace:*",
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081",
       },
     },
   },
@@ -665,17 +638,13 @@
 
     "@seri/api": ["@seri/api@workspace:apps/api"],
 
+    "@seri/base-tooling": ["@seri/base-tooling@github:Shion-Serizawa/seri-base-tooling#89ac04f", {}, "Shion-Serizawa-seri-base-tooling-89ac04f", "sha512-Leiz55tT72tYEy+Lr4BWgWubudsXo9jPxSQABDjBYQN1m0bEE382UE0G3SftfRRMZktFP+qcA5I9HIhFaf+dAQ=="],
+
     "@seri/contract": ["@seri/contract@workspace:packages/contract"],
 
     "@seri/db": ["@seri/db@workspace:packages/db"],
 
     "@seri/domain": ["@seri/domain@workspace:packages/domain"],
-
-    "@seri/quality-gates": ["@seri/quality-gates@workspace:tooling/quality-gates"],
-
-    "@seri/tsconfig": ["@seri/tsconfig@workspace:tooling/tsconfig"],
-
-    "@seri/vitest-config": ["@seri/vitest-config@workspace:tooling/vitest-config"],
 
     "@seri/web": ["@seri/web@workspace:apps/web"],
 

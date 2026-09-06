@@ -1,8 +1,8 @@
+import type { CommandOutcome } from '@seri/base-tooling/fitness/exec';
+import { contextOf, makeTempRepo, stubRun } from '@seri/base-tooling/test';
 import { describe, expect, it } from 'vitest';
 
 import { OPENAPI_SPEC_PATH } from '../../openapi/document.ts';
-import { contextOf, makeTempRepo, stubRun } from '../../test/temp-repo.ts';
-import type { CommandOutcome } from '../lib/exec.ts';
 import { checkOpenApiBreaking } from './openapi-breaking.ts';
 
 /** 最小構成の OpenAPI ドキュメント。 */

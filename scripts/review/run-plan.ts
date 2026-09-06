@@ -1,4 +1,5 @@
-import { runCommand } from '../fitness/lib/exec.ts';
+import { runCommand } from '@seri/base-tooling/fitness/exec';
+
 import { changedFiles } from '../mutation/changed.ts';
 import { formatPlan } from './plan.ts';
 import { routeReview } from './route.ts';

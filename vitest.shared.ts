@@ -1,4 +1,17 @@
-import { QUALITY_GATES } from '@seri/quality-gates';
+import gates from '@seri/base-tooling/quality-gates.json' with { type: 'json' };
+/**
+ * 共通 Vitest 設定。
+ *
+ * **A 層（`@seri/base-tooling`）にあるものを、ここにだけローカルで持っている。**
+ * `vitest.config.ts` は Vite の設定ローダー（Node）が直接実行するため、
+ * `node_modules` 配下の TypeScript を import できない
+ * （`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`）。パッケージから引けるのは JSON だけ。
+ *
+ * 乖離させてはいけないのは**しきい値**の方なので、数値は
+ * `@seri/base-tooling/quality-gates.json` を単一情報源として引いている。
+ * 組み立てる関数の側は除外パスなどがプロジェクトごとに違うため、ここで持って構わない。
+ * 経緯は docs/adr/0010-base-repo-derivation-and-propagation.md を参照。
+ */
 import type { ViteUserConfig } from 'vitest/config';
 
 type Environment = 'node' | 'happy-dom';
@@ -50,12 +63,12 @@ export function createCoverageOptions(
       ...(options.exclude ?? []),
     ],
     thresholds: {
-      lines: QUALITY_GATES.coverage.lines,
-      functions: QUALITY_GATES.coverage.functions,
-      branches: QUALITY_GATES.coverage.branches,
-      statements: QUALITY_GATES.coverage.statements,
+      lines: gates.coverage.lines,
+      functions: gates.coverage.functions,
+      branches: gates.coverage.branches,
+      statements: gates.coverage.statements,
       // ファイル単位で要求する（集計だと未テストのファイルが他のコードに隠れる）
-      perFile: QUALITY_GATES.coverage.perFile,
+      perFile: gates.coverage.perFile,
     },
   };
 }

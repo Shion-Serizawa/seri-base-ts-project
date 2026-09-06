@@ -1,5 +1,5 @@
-import { checkSupplyChain } from './checks/supply-chain.ts';
-import { printReport } from './lib/report.ts';
+import { checkSupplyChain } from '@seri/base-tooling/fitness/checks/supply-chain';
+import { printReport } from '@seri/base-tooling/fitness/report';
 
 // サプライチェーン関連のみを高速に検証する（pre-push / CI の最初に置く）。
 const passed = printReport(checkSupplyChain());

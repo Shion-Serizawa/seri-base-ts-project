@@ -1,11 +1,12 @@
-import { checkContractErrorDrift } from '../checks/contract-error-drift.ts';
-import { checkMigrationSafety } from '../checks/migration-safety.ts';
-import { checkOpenApiBreaking } from '../checks/openapi-breaking.ts';
-import { checkOpenApiDrift } from '../checks/openapi-drift.ts';
-import { checkSchemaDrift } from '../checks/schema-drift.ts';
-import type { FitnessContext } from '../lib/context.ts';
-import type { CheckResult } from '../lib/report.ts';
+import type { FitnessContext } from '@seri/base-tooling/fitness/context';
+import type { CheckResult } from '@seri/base-tooling/fitness/report';
+
+import { checkContractErrorDrift } from './contract-error-drift.ts';
 import { checkLayerBoundary } from './layer-boundary.ts';
+import { checkMigrationSafety } from './migration-safety.ts';
+import { checkOpenApiBreaking } from './openapi-breaking.ts';
+import { checkOpenApiDrift } from './openapi-drift.ts';
+import { checkSchemaDrift } from './schema-drift.ts';
 
 /**
  * このテンプレート固有の構造に依存する検査（ADR 0010 の C 層）。

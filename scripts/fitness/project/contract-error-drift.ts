@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { FitnessContext } from '../lib/context.ts';
-import { defaultContext } from '../lib/context.ts';
-import type { CheckResult } from '../lib/report.ts';
-import { isTestFile, listSourceFiles } from '../lib/walk.ts';
+import type { FitnessContext } from '@seri/base-tooling/fitness/context';
+import { defaultContext } from '@seri/base-tooling/fitness/context';
+import type { CheckResult } from '@seri/base-tooling/fitness/report';
+import { isTestFile, listSourceFiles } from '@seri/base-tooling/fitness/walk';
 
 const CONTRACT_SOURCE = join('packages', 'contract', 'src');
 const API_SOURCE = join('apps', 'api', 'src');

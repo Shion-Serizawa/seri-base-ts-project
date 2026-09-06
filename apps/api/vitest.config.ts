@@ -1,8 +1,9 @@
 import { join } from 'node:path';
 
 import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-pool-workers';
-import { createCoverageOptions, TEST_INCLUDE } from '@seri/vitest-config';
 import { defineConfig } from 'vitest/config';
+
+import { createCoverageOptions, TEST_INCLUDE } from '../../vitest.shared.ts';
 
 // パスは cwd ではなくこのファイルの位置から解決する（knip 等が root から読むため）。
 // node:url の URL 型は Workers ランタイム型と衝突するので使わず、

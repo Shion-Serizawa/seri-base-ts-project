@@ -1,6 +1,6 @@
+import { contextOf, makeTempRepo } from '@seri/base-tooling/test';
 import { describe, expect, it } from 'vitest';
 
-import { contextOf, makeTempRepo } from '../../test/temp-repo.ts';
 import { checkContractErrorDrift } from './contract-error-drift.ts';
 
 const CONTRACT = 'packages/contract/src/todo-contract.ts';

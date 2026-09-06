@@ -1,7 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
-import { runCommand } from '../fitness/lib/exec.ts';
+import { runCommand } from '@seri/base-tooling/fitness/exec';
+
 import { changedFiles, groupByWorkspace } from './changed.ts';
 
 /**

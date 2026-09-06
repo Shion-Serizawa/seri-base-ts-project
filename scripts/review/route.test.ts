@@ -56,7 +56,7 @@ describe('routeReview の発火条件', () => {
     ['README.md', 'compatibility'],
     ['README.md', 'security'],
     ['docs/adr/0002-fitness-functions.md', 'safety'],
-    ['scripts/fitness/collect.ts', 'security'],
+    ['scripts/fitness/run.ts', 'security'],
     ['packages/domain/src/todo.ts', 'performance-efficiency'],
     ['apps/api/src/repositories/todo-repository.ts', 'interaction-capability'],
   ] as const)('%s を変えても %s は起動しない', (path, key) => {

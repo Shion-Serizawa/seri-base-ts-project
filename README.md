@@ -13,12 +13,8 @@ packages/
   contract/     oRPC の API 契約と zod スキーマ（最下層。他に依存しない）
   domain/       純粋なビジネスロジック（I/O なし）
   db/           Drizzle スキーマとマイグレーション
-tooling/
-  tsconfig/       共有 tsconfig プリセット
-  vitest-config/  共有 Vitest 設定
-  quality-gates/  適応度関数のしきい値の単一情報源
 scripts/
-  fitness/      適応度関数の計測（実装自体もテスト対象）
+  fitness/project/  このリポジトリの形に依存する適応度関数（契約・スキーマ・層）
   mutation/     変更ファイルのみのミューテーションテスト
   openapi/      契約から OpenAPI ドキュメントを生成
   git/          Conventional Commits 検査
@@ -40,6 +36,24 @@ API は **oRPC の contract-first** で、`apps/web` は `packages/contract` の
 
 Hono は HTTP レイヤ（CORS・better-auth の委譲・ヘルスチェック）専用。
 詳細は [docs/adr/0004-orpc-contract-first.md](docs/adr/0004-orpc-contract-first.md)。
+
+## このテンプレートから新しいプロジェクトを作る
+
+GitHub の **Use this template** から作る（fork ではない）。fork にすると Issue / PR / star が
+親に紐づき、派生から親へ誤って PR が飛ぶ。テンプレートから作れば履歴の無い独立リポジトリに
+なり、初期コミット 1 個から始まる。
+
+作ったら 3 つやる。
+
+1. `.seri-base.json` の `ref` を、コピー元のコミット SHA に書き換える。
+   **これが基盤との唯一の接点**で、後から「どの世代から来たか」を知る手段はこれしか無い
+2. `docs/derived.md`（基盤側）に 1 行足す
+3. `apps/` と `packages/` のサンプル（Todo）を作るものに置き換える
+
+`@seri/base-tooling`（品質ゲートの本体）は依存として入っているので、基盤の改良は
+**SHA を上げるだけ**で届く。届かないのは `CLAUDE.md` / `knip.json` / サンプル実装で、
+これらは派生固有になるのが当然のものとして意図的に伝播させていない。
+境界の理由は [docs/adr/0010-base-repo-derivation-and-propagation.md](docs/adr/0010-base-repo-derivation-and-propagation.md)。
 
 ## セットアップ
 
@@ -77,9 +91,15 @@ bun run dev
 
 ## 品質ゲート
 
-しきい値は [`tooling/quality-gates/src/index.ts`](tooling/quality-gates/src/index.ts) に集約してある。
-oxlint / stryker / jscpd の設定ファイル側の数値と食い違っていないことを、
-`tooling/quality-gates` のテストが検証している（設定だけ緩めて指標を骨抜きにする抜け道を塞ぐ）。
+**ゲートの本体は [`@seri/base-tooling`](https://github.com/Shion-Serizawa/seri-base-tooling) にある。**
+git 依存 + コミット SHA で固定して引いている。このリポジトリに残っているのは
+「リポジトリの形（oRPC の契約・Drizzle のマイグレーション・層の依存方向）を知っている検査」だけで、
+`scripts/fitness/project/` に置いてある。理由と境界は
+[docs/adr/0010-base-repo-derivation-and-propagation.md](docs/adr/0010-base-repo-derivation-and-propagation.md)。
+
+しきい値は `@seri/base-tooling` の `QUALITY_GATES` に集約してある。
+oxlint / stryker / jscpd の設定ファイル側の数値と食い違っていないことを、適応度関数
+`threshold drift` が検証している（設定だけ緩めて指標を骨抜きにする抜け道を塞ぐ）。
 
 指標は「単独でハックすると別の指標が悪化する」ように選んでいる。詳細は
 [docs/adr/0002-fitness-functions.md](docs/adr/0002-fitness-functions.md)。
@@ -110,10 +130,10 @@ oxlint / stryker / jscpd の設定ファイル側の数値と食い違ってい�
 
 ⑪ は他のすべての指標の前提です。カテゴリの severity、error にしているルールの集合、
 off にしているルールの集合、override で無効化しているルール、`ignorePatterns` の適用範囲を
-`tooling/quality-gates/src/lint-policy.ts` のポリシーと突き合わせ、
+`@seri/base-tooling` が宣言しているポリシーと突き合わせ、
 **`"correctness": "off"` や `"vitest/expect-expect": "off"` のような改ざんを検出**します。
 
-`.oxlintrc.json` は `tooling/quality-gates/oxlint-base.json` を `extends` する薄いラッパなので、
+`.oxlintrc.json` は `@seri/base-tooling` の base 設定を `extends` する薄いラッパなので、
 ⑪ は **`extends` を解決した実効設定**に対して見ます（ADR 0010）。ファイルをそのまま読むと
 ポリシーの大半が検査対象から外れ、`extends` を消すだけで ⑪ が何も見なくなります。
 `ignorePatterns` は oxlint が継承しないため（実測）、適用範囲はルートに一本化しています。
@@ -255,7 +275,9 @@ bun run format:check  # 差分があれば失敗する（CI と同じ）
 
 詳細は [docs/adr/0003-supply-chain.md](docs/adr/0003-supply-chain.md)。
 
-- **完全固定**: `bunfig.toml` の `exact = true`。レンジ指定が残っていないことを適応度関数が検査する
+- **完全固定**: `bunfig.toml` の `exact = true`。未固定の依存が残っていないことを適応度関数が検査する。
+  npm パッケージは `x.y.z`、git 依存は **40 桁のコミット SHA** だけを認める
+  （ブランチ・タグ・短縮 SHA は後から中身が変わるので通らない）
 - **公開遅延**: `minimumReleaseAge = 604800`（7 日）。汚染されたリリースが検知・取り下げされる時間を稼ぐ
 - **integrity**: `bun.lock` を commit し、CI は `--frozen-lockfile`
 - **ツールチェーン固定**: `mise.lock` に全プラットフォーム分の SHA256
@@ -280,6 +302,6 @@ bun add <pkg> --minimum-release-age=0
 - MCP サーバ（今つなぐ先が無いため。`CLAUDE.md` とスキルは
   [docs/adr/0007-ai-coding-context.md](docs/adr/0007-ai-coding-context.md) で導入済み）
 - 認証 UI（サインイン・サインアップ画面）。API と認証クライアントの結線までは完了している
-- `packages/db` と `tooling/vitest-config` の直接のテスト（振る舞いは api の統合テストと
+- `packages/db` の直接のテスト（振る舞いは api の統合テストと
   各パッケージの利用側で検証している。`bun run fitness` のワークスペース別表示で可視化される）
 - REST 形式の API 公開（契約に `.route()` を足して `OpenAPIHandler` をマウントすれば可能）
