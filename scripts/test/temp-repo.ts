@@ -44,6 +44,11 @@ export function stubRun(
 }
 
 /** 検査に渡す `FitnessContext`。既定では外部コマンドを起動せず CI 扱いにしない。 */
-export function contextOf(root: string, run: RunCommand = stubRun(), ci = false): FitnessContext {
-  return { root, run, ci };
+export function contextOf(
+  root: string,
+  run: RunCommand = stubRun(),
+  ci = false,
+  baseRef = 'main',
+): FitnessContext {
+  return { root, run, ci, baseRef };
 }
