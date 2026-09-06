@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import { a11yViolations } from '../../../test/a11y.ts';
 import { TodoList } from './todo-list.tsx';
 
 function makeTodo(overrides: Partial<Todo> = {}): Todo {
@@ -54,5 +55,16 @@ describe('TodoList', () => {
   it('0 件のときは 0% を表示する', () => {
     render(<TodoList todos={[]} onToggle={vi.fn<(todo: Todo) => void>()} />);
     expect(screen.getByText('0 / 0 完了（0%）')).toBeInTheDocument();
+  });
+
+  it('アクセシビリティ違反が無い', async () => {
+    render(
+      <TodoList
+        todos={[makeTodo({ done: true }), makeTodo({ done: false })]}
+        onToggle={vi.fn<(todo: Todo) => void>()}
+      />,
+    );
+
+    await expect(a11yViolations()).resolves.toStrictEqual([]);
   });
 });

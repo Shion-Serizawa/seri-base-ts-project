@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { a11yViolations } from '../../../test/a11y.ts';
 import { renderWithQuery } from '../../../test/render.tsx';
 import { TodosPage } from './todos-page.tsx';
 
@@ -89,5 +90,13 @@ describe('TodosPage', () => {
     await waitFor(() => {
       expect(mocks.setDone).toHaveBeenCalledWith({ id: validId, done: true }, expect.anything());
     });
+  });
+
+  it('アクセシビリティ違反が無い', async () => {
+    mocks.list.mockResolvedValue([todo(), todo({ done: true })]);
+    renderWithQuery(<TodosPage />);
+    await screen.findAllByRole('checkbox');
+
+    await expect(a11yViolations()).resolves.toStrictEqual([]);
   });
 });
