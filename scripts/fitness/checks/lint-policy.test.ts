@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import { contextOf, makeTempRepo, repositoryConfigFiles } from '../../test/temp-repo.ts';
+import {
+  baseConfigPaths,
+  contextOf,
+  makeTempRepo,
+  repositoryConfigFiles,
+} from '../../test/temp-repo.ts';
 import { checkLintPolicy } from './lint-policy.ts';
 
 const ROOT = '.oxlintrc.json';
-const BASE = 'tooling/quality-gates/oxlint-base.json';
 const STRYKER = 'stryker.config.json';
 const JSCPD = '.jscpd.json';
+/** ルール本体が書かれている extends 先。基盤と派生で置き場所が違うので設定から辿る。 */
+const BASE = baseConfigPaths()[0] ?? '';
 
 type Patch = { readonly file: string; readonly from: string; readonly to: string };
 
@@ -51,8 +57,8 @@ describe('checkLintPolicy', () => {
     expect(results['lint policy']?.details).toContain(ROOT);
   });
 
-  it('extends を外すとルール本体が消えて FAIL する', () => {
-    const root = repoWithConfig([{ file: ROOT, from: `"extends": ["./${BASE}"],`, to: '' }]);
+  it('extends の解決に失敗するとルール本体が消えて FAIL する', () => {
+    const root = repoWithConfig([{ file: ROOT, from: `"./${BASE}"`, to: '"./missing.json"' }]);
 
     expect(resultsOf(root)['lint policy']?.ok).toBe(false);
   });

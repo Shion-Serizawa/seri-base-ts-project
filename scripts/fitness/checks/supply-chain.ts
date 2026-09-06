@@ -7,7 +7,6 @@ import type { FitnessContext } from '../lib/context.ts';
 import { defaultContext } from '../lib/context.ts';
 import type { CheckResult } from '../lib/report.ts';
 
-const MANIFEST_DIRECTORIES = ['apps', 'packages', 'tooling'];
 const DEPENDENCY_FIELDS = [
   'dependencies',
   'devDependencies',
@@ -18,11 +17,11 @@ const EXACT_VERSION = /^\d+\.\d+\.\d+(?:-[\w.]+)?$/u;
 const COMMIT_SHA = /^[\da-f]{40}$/u;
 const MAX_DETAILS = 10;
 
-function listManifests(root: string): string[] {
+function listManifests(root: string, sourceRoots: readonly string[]): string[] {
   const manifests = [join(root, 'package.json')];
-  for (const directory of MANIFEST_DIRECTORIES.map((path) => join(root, path)).filter((path) =>
-    existsSync(path),
-  )) {
+  for (const directory of sourceRoots
+    .map((path) => join(root, path))
+    .filter((path) => existsSync(path))) {
     for (const entry of readdirSync(directory)) {
       const manifest = join(directory, entry, 'package.json');
       if (existsSync(manifest)) {
@@ -62,8 +61,10 @@ function collectRangeViolations(manifest: string): string[] {
 }
 
 /** 依存が完全固定（レンジ禁止）であることを検証する。 */
-function checkExactVersions(root: string): CheckResult {
-  const violations = listManifests(root).flatMap((manifest) => collectRangeViolations(manifest));
+function checkExactVersions(root: string, sourceRoots: readonly string[]): CheckResult {
+  const violations = listManifests(root, sourceRoots).flatMap((manifest) =>
+    collectRangeViolations(manifest),
+  );
   return {
     name: 'dependency pinning',
     ok: violations.length === 0,
@@ -173,7 +174,7 @@ function checkActionPinning(root: string): CheckResult {
 
 export function checkSupplyChain(context: FitnessContext = defaultContext()): CheckResult[] {
   return [
-    checkExactVersions(context.root),
+    checkExactVersions(context.root, context.sourceRoots),
     checkInstallPolicy(context.root),
     checkActionPinning(context.root),
   ];

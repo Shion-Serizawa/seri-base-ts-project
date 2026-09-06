@@ -18,11 +18,12 @@ import type { FitnessContext } from '../lib/context.ts';
 import { defaultContext } from '../lib/context.ts';
 import type { JsonObject, OxlintOverride } from '../lib/oxlint-config.ts';
 import {
-  ignorePatternsInExtends,
+  extendsTargets,
   isRecord,
   loadEffectiveOxlintConfig,
   objectAt,
   overridesOf,
+  ownIgnorePatterns,
   stringsAt,
 } from '../lib/oxlint-config.ts';
 import type { CheckResult } from '../lib/report.ts';
@@ -119,7 +120,7 @@ function scopeComparisons(config: JsonObject, rootConfigPath: string): Compariso
     {
       // 実測: extends 先の ignorePatterns は継承されない。書いても効かない
       label: 'extends 先の ignorePatterns（効かない）',
-      actual: ignorePatternsInExtends(rootConfigPath),
+      actual: extendsTargets(rootConfigPath).flatMap((target) => ownIgnorePatterns(target)),
       expected: [],
     },
   ];

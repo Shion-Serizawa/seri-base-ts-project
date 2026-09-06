@@ -1,11 +1,13 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 
 import { onTestFinished } from 'vitest';
 
 import type { FitnessContext } from '../fitness/lib/context.ts';
+import { defaultContext } from '../fitness/lib/context.ts';
 import type { CommandOutcome, RunCommand } from '../fitness/lib/exec.ts';
+import { extendsTargets } from '../fitness/lib/oxlint-config.ts';
 
 /**
  * 一時ディレクトリに擬似リポジトリを作る。テスト終了時に自動で削除される。
@@ -43,30 +45,56 @@ export function stubRun(
   return Object.assign(run, { calls });
 }
 
-/** 検査に渡す `FitnessContext`。既定では外部コマンドを起動せず CI 扱いにしない。 */
+/**
+ * 検査に渡す `FitnessContext`。既定では外部コマンドを起動せず CI 扱いにしない。
+ *
+ * レイアウト（`sourceRoots` / `bundles`）は本番の既定をそのまま使う。テスト用に
+ * 別の既定を置くと、検査が実際に見る対象とフィクスチャが少しずつずれていく。
+ */
 export function contextOf(
   root: string,
   run: RunCommand = stubRun(),
   ci = false,
   baseRef = 'main',
 ): FitnessContext {
-  return { root, run, ci, baseRef };
+  return { ...defaultContext(), root, run, ci, baseRef };
+}
+
+/** レイアウトを差し替えた `FitnessContext`（対象ディレクトリや予算を変えて試すとき）。 */
+export function contextWith(
+  root: string,
+  overrides: Partial<Omit<FitnessContext, 'root'>>,
+): FitnessContext {
+  return { ...contextOf(root), ...overrides };
 }
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..');
+
+const ROOT_CONFIG = '.oxlintrc.json';
+
+/** ルートの設定からの相対パスに直す（一時リポジトリでも同じ形で置くため）。 */
+function relativeToRepo(absolute: string): string {
+  return relative(REPO_ROOT, absolute).replaceAll('\\', '/');
+}
+
+/**
+ * `.oxlintrc.json` が `extends` している設定ファイルの、リポジトリ相対パス。
+ *
+ * 置き場所は基盤（`tooling/quality-gates/`）と派生（`node_modules/` の中）で違うので、
+ * パスを書かずに設定から辿る。
+ */
+export function baseConfigPaths(): string[] {
+  return extendsTargets(join(REPO_ROOT, ROOT_CONFIG)).map((path) => relativeToRepo(path));
+}
 
 /**
  * 実物の設定ファイル。⑪ は「宣言したポリシーとの完全一致」を見るので、
  * 手書きのフィクスチャを置くと実物とは別のポリシーを検査することになる。
  */
 export function repositoryConfigFiles(): Record<string, string> {
+  const paths = [ROOT_CONFIG, ...baseConfigPaths(), 'stryker.config.json', '.jscpd.json'];
   return Object.fromEntries(
-    [
-      '.oxlintrc.json',
-      'tooling/quality-gates/oxlint-base.json',
-      'stryker.config.json',
-      '.jscpd.json',
-    ].map((path) => [path, readFileSync(join(REPO_ROOT, path), 'utf8')]),
+    paths.map((path) => [path, readFileSync(join(REPO_ROOT, path), 'utf8')]),
   );
 }
 

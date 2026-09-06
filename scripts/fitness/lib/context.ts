@@ -1,5 +1,31 @@
+import { QUALITY_GATES } from '@seri/quality-gates';
+
 import type { RunCommand } from './exec.ts';
 import { runCommand } from './exec.ts';
+
+/** バンドルサイズ予算の対象。ビルド成果物を持たないリポジトリでは空になる。 */
+type BundleTarget = {
+  readonly name: string;
+  /** リポジトリルートからの相対パス */
+  readonly dist: string;
+  readonly maxGzipBytes: number;
+};
+
+/**
+ * ワークスペースを置くディレクトリ。
+ *
+ * A 層の検査（テスト比率・依存の固定・文書の乖離）は「どこにコードがあるか」を
+ * 知る必要があるが、それは派生ごとに違う。既定はこのテンプレートの形。
+ */
+const DEFAULT_SOURCE_ROOTS = ['apps', 'packages', 'tooling', 'scripts'] as const;
+
+function defaultBundles(): BundleTarget[] {
+  const { sizeBudget } = QUALITY_GATES;
+  return [
+    { name: 'bundle size (api)', dist: 'apps/api/dist', maxGzipBytes: sizeBudget.apiGzipBytes },
+    { name: 'bundle size (web)', dist: 'apps/web/dist', maxGzipBytes: sizeBudget.webGzipBytes },
+  ];
+}
 
 /**
  * 適応度関数の実行環境。
@@ -25,6 +51,10 @@ export type FitnessContext = {
    * `HEAD~1` に落として、落としたことを結果に出す。
    */
   readonly baseRef: string;
+  /** コードを探すディレクトリ。派生がレイアウトを変えたらここを変える */
+  readonly sourceRoots: readonly string[];
+  /** バンドルサイズ予算の対象。持たないリポジトリは空を宣言する */
+  readonly bundles: readonly BundleTarget[];
 };
 
 export function defaultContext(): FitnessContext {
@@ -33,5 +63,7 @@ export function defaultContext(): FitnessContext {
     run: runCommand,
     ci: process.env['CI'] !== undefined,
     baseRef: process.env['FITNESS_BASE_REF'] ?? 'main',
+    sourceRoots: [...DEFAULT_SOURCE_ROOTS],
+    bundles: defaultBundles(),
   };
 }

@@ -1,19 +1,30 @@
 import { describe, expect, it } from 'vitest';
 
-import { contextOf, makeTempRepo } from '../../test/temp-repo.ts';
+import { contextOf, contextWith, makeTempRepo } from '../../test/temp-repo.ts';
+import type { FitnessContext } from '../lib/context.ts';
 import type { CheckResult } from '../lib/report.ts';
 import { checkSizeBudget } from './size-budget.ts';
 
-const GENEROUS = { apiGzipBytes: 10_000, webGzipBytes: 10_000 };
-const IMPOSSIBLE = { apiGzipBytes: 1, webGzipBytes: 1 };
+type Bundles = FitnessContext['bundles'];
+
+const bundlesOf = (maxGzipBytes: number): Bundles => [
+  { name: 'bundle size (api)', dist: 'apps/api/dist', maxGzipBytes },
+  { name: 'bundle size (web)', dist: 'apps/web/dist', maxGzipBytes },
+];
+
+const GENEROUS = bundlesOf(10_000);
+const IMPOSSIBLE = bundlesOf(1);
 
 const BUILT = {
   'apps/api/dist/worker.js': 'console.log(1);',
   'apps/web/dist/main.js': 'console.log(2);',
 };
 
-function resultsOf(files: Readonly<Record<string, string>>, budget = GENEROUS): CheckResult[] {
-  return checkSizeBudget(contextOf(makeTempRepo(files)), budget);
+function resultsOf(
+  files: Readonly<Record<string, string>>,
+  bundles: Bundles = GENEROUS,
+): CheckResult[] {
+  return checkSizeBudget(contextWith(makeTempRepo(files), { bundles }));
 }
 
 describe('checkSizeBudget', () => {
@@ -79,6 +90,8 @@ describe('checkSizeBudget', () => {
   });
 
   it('既定の予算は QUALITY_GATES の値を使う', () => {
+    // 対象と予算は context が持つ（派生リポジトリはビルド成果物を持たないこともある）。
+    // 既定がしきい値の単一情報源から来ていることをここで固定する。
     const [api] = checkSizeBudget(contextOf(makeTempRepo(BUILT)));
 
     expect(api?.expected).toBe('<= 550.0 kB gzip');

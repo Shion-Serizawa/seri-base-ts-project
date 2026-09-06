@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { makeTempRepo, stubRun } from '../../test/temp-repo.ts';
+import { contextOf as sharedContextOf, makeTempRepo, stubRun } from '../../test/temp-repo.ts';
 import type { FitnessContext } from '../lib/context.ts';
 import type { CommandOutcome } from '../lib/exec.ts';
 import { checkSecretScan } from './secret-scan.ts';
@@ -31,7 +31,7 @@ const onlyHistoryLeaks = installedWith((command) =>
  * ここだけ古いまま通ってしまう（実際に `baseRef` を足したときに型検査が止めた）。
  */
 function contextOf(run: ReturnType<typeof stubRun>, ci = false): FitnessContext {
-  return { root: makeTempRepo({}), run, ci, baseRef: 'main' };
+  return sharedContextOf(makeTempRepo({}), run, ci);
 }
 
 describe('gitleaks の解決', () => {
