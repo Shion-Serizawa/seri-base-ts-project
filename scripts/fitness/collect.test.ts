@@ -14,7 +14,7 @@ describe('collectBaseChecks', () => {
     expect(results.filter((result) => !result.ok)).toStrictEqual([]);
   });
 
-  it('リポジトリの形を知らない 11 本の検査を返す', () => {
+  it('リポジトリの形を知らない 13 本の検査を返す', () => {
     const results = collectBaseChecks(contextOf(makeHealthyBaseRepo()));
 
     expect(results.map((result) => result.name)).toStrictEqual([
@@ -28,6 +28,8 @@ describe('collectBaseChecks', () => {
       'install policy',
       'actions pinning',
       'secret scan',
+      'lint policy',
+      'threshold drift',
       'context drift',
     ]);
   });

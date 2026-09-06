@@ -61,17 +61,26 @@ AI も人間も、そこを読んで直す。
 
 [tooling/quality-gates/src/index.ts](../../../tooling/quality-gates/src/index.ts) が単一情報源。
 数値を検査ファイルに直書きしない。外部ツールの設定ファイル（`.jscpd.json` 等）にも同じ数値を書く場合は、
-`tooling/quality-gates/src/external-config.test.ts` に一致検証を足す。
+`scripts/fitness/checks/lint-policy.ts` の `threshold drift` に比較を 1 行足す。
 **設定ファイル側だけを緩める**のが最も安易な抜け道なので、ここを塞がないと指標が意味を失う。
 
-## 3. `scripts/fitness/collect.ts` に登録する
+## 3. どちらの層かを決めて登録する
 
-[scripts/fitness/collect.ts](../../../scripts/fitness/collect.ts) に追加する。
-何をここに含めないか（vitest / oxlint 側で強制しているもの）はファイル冒頭のコメントにある。
-`collect.test.ts` の検査名の一覧と件数も更新する。
+リポジトリの形（oRPC の契約、Drizzle のマイグレーション、`apps/` の構成）を知っている検査か
+どうかで置き場所が変わる（ADR 0010）。
 
-**`healthyRoot()` のフィクスチャも直す。** `collect.test.ts` は「全件 PASS」を検証するので、
+| 層                   | 置き場所                   | 登録先                                   |
+| -------------------- | -------------------------- | ---------------------------------------- |
+| 形を知らない（A 層） | `scripts/fitness/checks/`  | `scripts/fitness/groups/` のどちらかの群 |
+| 形に依存する（C 層） | `scripts/fitness/project/` | `scripts/fitness/project/checks.ts`      |
+
+A 層に足したら `collect.test.ts` の検査名の一覧と件数を、C 層に足したら
+`project/checks.test.ts` と `scripts/fitness/run.ts` の `EXPECTED_PROJECT_RESULTS` を更新する。
+件数の宣言がずれると `project checks` が FAIL する（差し込み漏れを黙って通さないため）。
+
+**フィクスチャも直す。** どちらのテストも「全件 PASS」を検証するので、
 新しい検査が PASS するために必要なファイル（⑬ なら `CLAUDE.md`）を足さないと落ちる。
+A 層のフィクスチャは `scripts/test/temp-repo.ts` の `makeHealthyBaseRepo()` にある。
 ここで落ちたときに「検査の実装が悪い」と誤診してしきい値や判定を緩めるのが最悪の手。
 まずフィクスチャ不足を疑う。
 
@@ -127,4 +136,4 @@ bun run lint           # 複雑度・any 禁止（型情報つき）
 - **FAIL ケースのテストの書き忘れ → 何も落ちない。** ここだけは自分で守る
 
 ゲートに詰まったときは**設定を緩めるのではなく実装を直す**。lint 設定の改ざんは
-⑪（`tooling/quality-gates/src/lint-policy.ts`）が検出するので、緩める方向は結局通らない。
+⑪（`scripts/fitness/checks/lint-policy.ts`）が検出するので、緩める方向は結局通らない。

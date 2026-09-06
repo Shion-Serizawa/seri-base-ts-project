@@ -93,11 +93,13 @@ oxlint / stryker / jscpd の設定ファイル側の数値と食い違ってい�
 | ⑤   | 循環的複雑度 10 / ネスト 3 / 関数 50 行 / 引数 4    | oxlint                                       | 無意味な関数分割                      | ⑥ ③                                  |
 | ⑥   | 未使用 export・未使用依存ゼロ                       | knip                                         | **テストを1本足して「使用中」にする** | ⑥′                                   |
 | ⑥′  | 本番の入口から到達しない export ゼロ                | `knip --production`                          | —                                     | ⑥ の抜け道を塞ぐ                     |
-| ⑦   | 層をまたぐ依存・循環依存ゼロ（サブパス込み）        | oxlint                                       | —                                     | —                                    |
+| ⑦   | 層をまたぐ依存・循環依存ゼロ（サブパス込み）        | oxlint                                       | 境界の定義そのものを書き換える        | ⑪ が定義との一致を見る               |
 | ⑧   | バンドルサイズ（gzip: api 550kB / web 160kB）       | `bun run fitness`                            | 依存を足して楽をする                  | ⑤                                    |
 | ⑨   | シークレットの混入ゼロ（作業ツリー + git 履歴）     | gitleaks                                     | —                                     | —                                    |
 | ⑩   | スキーマとマイグレーションの乖離ゼロ                | drizzle-kit                                  | —                                     | —                                    |
-| ⑪   | **Lint 設定そのものの改ざんゼロ**                   | `tooling/quality-gates` のテスト             | ゲートに詰まったら設定を緩める        | ⑪ が全指標を守る                     |
+| ⑪   | **Lint 設定そのものの改ざんゼロ**                   | `bun run fitness`                            | ゲートに詰まったら設定を緩める        | ⑪ が全指標を守る                     |
+| ⑪′  | しきい値の二重管理の乖離ゼロ                        | `bun run fitness`                            | 設定ファイル側だけを緩める            | ⑪ と対（形と数値の両側）             |
+| ⑪″  | 層と認可スコープの定義がポリシーと一致              | `bun run fitness`                            | allowlist に 1 行足す                 | ⑦ ⑭ の定義を固定する                 |
 | ⑫   | 契約と OpenAPI ドキュメントの乖離ゼロ               | `bun run fitness`                            | —                                     | —                                    |
 | ⑬   | `CLAUDE.md` とスキルの参照切れゼロ                  | `bun run fitness`                            | **文書ごと消す**                      | ⑬ が「文書なし」を FAIL にする       |
 | ⑭   | 認可スコープをテーブル境界に閉じ込める              | oxlint（`no-restricted-imports`）＋ 型       | 境界の内側に絞り込まない操作を足す    | allowlist の拡大は ⑪ が塞ぐ          |
@@ -107,9 +109,14 @@ oxlint / stryker / jscpd の設定ファイル側の数値と食い違ってい�
 | ⑱   | 組み立てた DOM のアクセシビリティ違反ゼロ           | Vitest（axe）                                | —                                     | 静的な不備は `jsx-a11y` が見る       |
 
 ⑪ は他のすべての指標の前提です。カテゴリの severity、error にしているルールの集合、
-off にしているルールの集合、override で無効化しているルールを
+off にしているルールの集合、override で無効化しているルール、`ignorePatterns` の適用範囲を
 `tooling/quality-gates/src/lint-policy.ts` のポリシーと突き合わせ、
 **`"correctness": "off"` や `"vitest/expect-expect": "off"` のような改ざんを検出**します。
+
+`.oxlintrc.json` は `tooling/quality-gates/oxlint-base.json` を `extends` する薄いラッパなので、
+⑪ は **`extends` を解決した実効設定**に対して見ます（ADR 0010）。ファイルをそのまま読むと
+ポリシーの大半が検査対象から外れ、`extends` を消すだけで ⑪ が何も見なくなります。
+`ignorePatterns` は oxlint が継承しないため（実測）、適用範囲はルートに一本化しています。
 
 **test ratio に下限を置いていないのは意図的です。** 下限は `it.each` のようなテーブル駆動化
 （テスト行数が減ってカバレッジとミューテーションスコアは上がる書き方）を罰してしまい、

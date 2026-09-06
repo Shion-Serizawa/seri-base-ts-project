@@ -12,7 +12,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@seri/tsconfig": "workspace:*",
-    "zod": "4.4.3"
+    "@seri/tsconfig": "workspace:*"
   }
 }

@@ -1,27 +1,34 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-import { z } from 'zod';
+export type JsonObject = Record<string, unknown>;
 
-const objectSchema = z.record(z.string(), z.unknown());
-const arraySchema = z.array(z.unknown());
+export function isRecord(value: unknown): value is JsonObject {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
-type JsonObject = z.infer<typeof objectSchema>;
+function isArray(value: unknown): value is unknown[] {
+  return Array.isArray(value);
+}
 
 /** `.oxlintrc.json` は JSONC（行コメント可）。 */
 function readJsonc(path: string): JsonObject {
   const raw: string = readFileSync(path, 'utf8');
-  return objectSchema.parse(JSON.parse(raw.replaceAll(/^\s*\/\/.*$/gmu, '')));
+  const parsed: unknown = JSON.parse(raw.replaceAll(/^\s*\/\/.*$/gmu, ''));
+  if (!isRecord(parsed)) {
+    throw new Error(`${path} が JSON オブジェクトではない`);
+  }
+  return parsed;
 }
 
-function objectAt(config: JsonObject, key: string): JsonObject {
-  const parsed = objectSchema.safeParse(config[key]);
-  return parsed.success ? parsed.data : {};
+export function objectAt(config: JsonObject, key: string): JsonObject {
+  const value = config[key];
+  return isRecord(value) ? { ...value } : {};
 }
 
 function arrayAt(config: JsonObject, key: string): unknown[] {
-  const parsed = arraySchema.safeParse(config[key]);
-  return parsed.success ? parsed.data : [];
+  const value = config[key];
+  return isArray(value) ? [...value] : [];
 }
 
 /**
@@ -78,4 +85,32 @@ export function loadEffectiveOxlintConfig(configPath: string): JsonObject {
 
   const { extends: _resolved, ...rest } = inherit(merged, own);
   return rest;
+}
+
+/** 文字列だけを取り出す（設定ファイルは手書きなので型が崩れうる）。 */
+export function stringsAt(config: JsonObject, key: string): string[] {
+  return arrayAt(config, key).filter((entry): entry is string => typeof entry === 'string');
+}
+
+/**
+ * `extends` 先が宣言している `ignorePatterns` を集める。
+ *
+ * 実測どおり oxlint はこれを継承しない。つまり書いても効かないのに、書いた側は
+ * 「除外できている」と思い込む。1 件でもあれば違反として報告する。
+ */
+export function ignorePatternsInExtends(configPath: string): string[] {
+  const own = readJsonc(configPath);
+  return stringsAt(own, 'extends').flatMap((entry) => {
+    const target = resolve(dirname(configPath), entry);
+    return stringsAt(readJsonc(target), 'ignorePatterns').concat(ignorePatternsInExtends(target));
+  });
+}
+
+export type OxlintOverride = { readonly files: readonly string[]; readonly rules: JsonObject };
+
+/** `overrides` を、出現順のまま扱いやすい形で取り出す。 */
+export function overridesOf(config: JsonObject): OxlintOverride[] {
+  return arrayAt(config, 'overrides')
+    .filter((entry): entry is JsonObject => isRecord(entry))
+    .map((entry) => ({ files: stringsAt(entry, 'files'), rules: objectAt(entry, 'rules') }));
 }

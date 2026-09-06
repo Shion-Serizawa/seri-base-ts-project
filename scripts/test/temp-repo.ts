@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -53,6 +53,23 @@ export function contextOf(
   return { root, run, ci, baseRef };
 }
 
+const REPO_ROOT = join(import.meta.dirname, '..', '..');
+
+/**
+ * 実物の設定ファイル。⑪ は「宣言したポリシーとの完全一致」を見るので、
+ * 手書きのフィクスチャを置くと実物とは別のポリシーを検査することになる。
+ */
+export function repositoryConfigFiles(): Record<string, string> {
+  return Object.fromEntries(
+    [
+      '.oxlintrc.json',
+      'tooling/quality-gates/oxlint-base.json',
+      'stryker.config.json',
+      '.jscpd.json',
+    ].map((path) => [path, readFileSync(join(REPO_ROOT, path), 'utf8')]),
+  );
+}
+
 /**
  * A 層の検査（`collectBaseChecks`）がすべて PASS になる擬似リポジトリ。
  *
@@ -62,6 +79,7 @@ export function contextOf(
  */
 export function makeHealthyBaseRepo(): string {
   return makeTempRepo({
+    ...repositoryConfigFiles(),
     'package.json': JSON.stringify({ name: 'root', devDependencies: { knip: '6.32.2' } }),
     'bunfig.toml': '[install]\nexact = true\nminimumReleaseAge = 604800\n',
     'bun.lock': '',

@@ -5,7 +5,7 @@ import {
   OPENAPI_SPEC_PATH,
   serializeOpenApiDocument,
 } from '../../openapi/document.ts';
-import { contextOf, makeTempRepo, stubRun } from '../../test/temp-repo.ts';
+import { contextOf, makeTempRepo, repositoryConfigFiles, stubRun } from '../../test/temp-repo.ts';
 import type { CommandOutcome } from '../lib/exec.ts';
 import { collectProjectChecks } from './checks.ts';
 
@@ -22,6 +22,7 @@ const baseReply = (command: string): Partial<CommandOutcome> =>
 /** このテンプレートの形（契約・スキーマ・生成物）を備えた擬似リポジトリ。 */
 async function healthyRoot(): Promise<string> {
   return makeTempRepo({
+    ...repositoryConfigFiles(),
     'package.json': JSON.stringify({ name: 'root' }),
     // ⑮ 契約エラーの乖離: 契約が宣言したエラーを実装が送出している状態
     'packages/contract/src/todo-contract.ts':
@@ -49,11 +50,13 @@ describe('collectProjectChecks', () => {
       'openapi breaking',
       'migration safety',
       'contract error drift',
+      'layer boundary',
     ]);
   });
 
   it('生成物が乖離していれば、その検査だけが FAIL になる', async () => {
     const root = makeTempRepo({
+      ...repositoryConfigFiles(),
       'package.json': JSON.stringify({ name: 'root' }),
       'packages/contract/src/todo-contract.ts':
         "const c = oc.errors({ UNAUTHORIZED: { message: '認証が必要です' } });\n",

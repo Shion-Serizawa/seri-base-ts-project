@@ -5,6 +5,7 @@ import { checkOpenApiDrift } from '../checks/openapi-drift.ts';
 import { checkSchemaDrift } from '../checks/schema-drift.ts';
 import type { FitnessContext } from '../lib/context.ts';
 import type { CheckResult } from '../lib/report.ts';
+import { checkLayerBoundary } from './layer-boundary.ts';
 
 /**
  * このテンプレート固有の構造に依存する検査（ADR 0010 の C 層）。
@@ -24,5 +25,6 @@ export async function collectProjectChecks(context: FitnessContext): Promise<Che
     checkOpenApiBreaking(context),
     checkMigrationSafety(context),
     checkContractErrorDrift(context),
+    ...checkLayerBoundary(context),
   ];
 }
