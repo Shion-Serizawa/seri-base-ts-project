@@ -26,6 +26,23 @@ describe('changedFiles', () => {
     expect(run.calls).toHaveLength(2);
   });
 
+  it('CI が push 時に渡す HEAD~1 をベースとして使う', () => {
+    // `~` を弾いていたため、main への push で差分基準が黙って作業ツリー差分に落ち、
+    // ④ の牽制が実質効いていなかった。
+    const run = stubRun(() => ({ status: 0, stdout: 'apps/api/src/a.ts\n' }));
+
+    expect(changedFiles(run, 'HEAD~1')).toStrictEqual(['apps/api/src/a.ts']);
+    expect(run.calls[0]).toContain('HEAD~1...HEAD');
+  });
+
+  it('cmd.exe がエスケープ文字として食う `^` は使わない', () => {
+    const run = stubRun(() => ({ status: 0, stdout: 'apps/web/src/b.tsx' }));
+
+    changedFiles(run, 'HEAD^');
+
+    expect(run.calls).toStrictEqual(['git diff --name-only HEAD']);
+  });
+
   it('シェルを解釈しうる ref 名は使わず、作業ツリーの差分に落とす', () => {
     const run = stubRun(() => ({ status: 0, stdout: 'apps/web/src/b.tsx' }));
 
