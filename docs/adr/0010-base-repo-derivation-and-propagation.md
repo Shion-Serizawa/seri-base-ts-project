@@ -166,11 +166,16 @@ process.exit((await runFitness({ extraChecks: projectChecks })) ? 0 : 1);
 | `.github/workflows/ci.yml` | reusable workflow（`uses: owner/repo/...@<SHA>`）       | A 層へ。派生は caller だけ |
 | `.claude/skills/`          | Claude Code plugin                                      | A 層へ                     |
 | `knip.json`                | extends 無し。中身が `entry` / `project` = 構造そのもの | **C 層**（伝播しない）     |
-| `CLAUDE.md`                | 不変部分を切り出して参照させる                          | 分割。本体は C 層          |
+| `CLAUDE.md`                | —                                                       | **C 層**（分割しない）     |
 
 **押し出せないのは `knip.json` と `CLAUDE.md` の 2 つだけで、どちらも
 「派生固有になるのが当然」のもの。** したがって 3-way merge が要るファイルは残らず、
 同期ツールを作る必要も無くなった。
+
+当初は `CLAUDE.md` の不変部分を `docs/base-rules.md` に切り出して参照させる案だったが、
+実際に中身を数えると汎用なのは「Maker–Checker」と「ゲートを緩めるな」の 15 行ほどで、
+残りは層の依存・oRPC・Workers という C 層だった。15 行のために ⑬ の参照面と
+AI が読むファイル数を増やす価値は無い。**テンプレートには入るが、伝播はさせない。**
 
 ### 6. ⑪ は `extends` 解決後の設定を見る
 
