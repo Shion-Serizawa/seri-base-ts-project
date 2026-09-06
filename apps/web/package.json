@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@orpc/contract": "1.15.0",
-    "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#40490b2e7c3615a76e47afd89fdda4375c0778d8",
+    "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#b92caf9b7a936fba7956b628aeaf2e740195e561",
     "@seri/vitest-config": "workspace:*",
     "@tanstack/router-plugin": "1.168.32",
     "@testing-library/jest-dom": "7.0.1",
