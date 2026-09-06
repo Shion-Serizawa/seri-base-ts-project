@@ -12,8 +12,12 @@ const TEST_PATTERN = /\.(?:test|spec)\.tsx?$/u;
  * `runCommand` は `shell: true` で実行するため、`;` `&` `$` `` ` `` を含む ref を
  * そのまま埋めると別の ref を見にいく（悪意ある PR のブランチ名なら任意コマンドが走る）。
  * git 上は合法でもここでは受け付けず、作業ツリー差分へのフォールバックに倒す。
+ *
+ * `~` を許すのは CI が push 時に `HEAD~1` を渡すため。許していなかったため、
+ * main への push では差分基準が黙って作業ツリー差分に落ちていた（④ の牽制が
+ * 効いていない状態）。`^` は Windows の cmd.exe がエスケープ文字として食うので許さない。
  */
-const SAFE_REF = /^[\w./-]+$/u;
+const SAFE_REF = /^[\w./~-]+$/u;
 
 /** ワークスペースがミューテーションテストの対象になりうるか（vitest 設定があるか）。 */
 export type HasVitestConfig = (workspace: string) => boolean;
