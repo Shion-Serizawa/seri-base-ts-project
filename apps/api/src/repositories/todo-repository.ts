@@ -1,48 +1,44 @@
 import type { Todo, TodoId } from '@seri/contract';
 import { todoSchema } from '@seri/contract';
-import type { Database, NewTodoRow } from '@seri/db';
-import { todos } from '@seri/db';
-import { and, eq } from 'drizzle-orm';
+
+import type { Bindings } from '../env.ts';
+import { ownedTodos } from './todo-table.ts';
 
 /**
- * すべてのクエリを `userId` でスコープする。
+ * セッションのユーザーに束縛済みの Todo 操作。
  *
- * 他人の Todo に対する更新・削除は「見つからない」として扱う。
+ * 生成時に `userId` を閉じ込めるので、各操作の引数に `userId` は現れない。
+ * 他人の Todo に対する更新・削除は「見つからない」（`undefined` / `false`）として扱う。
  * 403 を返すと id の存在が漏れるため。
  */
-function ownedBy(userId: string, id: TodoId) {
-  return and(eq(todos.userId, userId), eq(todos.id, id));
-}
+export type TodoRepository = {
+  readonly list: () => Promise<Todo[]>;
+  readonly create: (title: string) => Promise<Todo>;
+  readonly setDone: (id: TodoId, done: boolean) => Promise<Todo | undefined>;
+  readonly remove: (id: TodoId) => Promise<boolean>;
+};
 
-export async function listTodos(db: Database, userId: string): Promise<Todo[]> {
-  const rows = await db.select().from(todos).where(eq(todos.userId, userId)).all();
-  return rows.map((row) => todoSchema.parse(row));
-}
+export function todoRepository(env: Bindings, userId: string): TodoRepository {
+  const table = ownedTodos(env, userId);
 
-export async function insertTodo(db: Database, userId: string, title: string): Promise<Todo> {
-  const row: NewTodoRow = {
-    id: crypto.randomUUID(),
-    userId,
-    title,
-    done: false,
-    createdAt: new Date().toISOString(),
+  return {
+    list: async () => (await table.all()).map((row) => todoSchema.parse(row)),
+
+    create: async (title) =>
+      todoSchema.parse(
+        await table.insert({
+          id: crypto.randomUUID(),
+          title,
+          done: false,
+          createdAt: new Date().toISOString(),
+        }),
+      ),
+
+    setDone: async (id, done) => {
+      const row = await table.update(id, { done });
+      return row === undefined ? undefined : todoSchema.parse(row);
+    },
+
+    remove: async (id) => await table.remove(id),
   };
-  await db.insert(todos).values(row).run();
-  return todoSchema.parse(row);
-}
-
-export async function setTodoDone(
-  db: Database,
-  userId: string,
-  id: TodoId,
-  done: boolean,
-): Promise<Todo | undefined> {
-  const rows = await db.update(todos).set({ done }).where(ownedBy(userId, id)).returning();
-  const row = rows[0];
-  return row === undefined ? undefined : todoSchema.parse(row);
-}
-
-export async function deleteTodo(db: Database, userId: string, id: TodoId): Promise<boolean> {
-  const rows = await db.delete(todos).where(ownedBy(userId, id)).returning();
-  return rows.length > 0;
 }

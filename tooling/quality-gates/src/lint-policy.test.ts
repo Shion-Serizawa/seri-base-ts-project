@@ -6,11 +6,13 @@ import { z } from 'zod';
 import {
   ALLOWED_OFF_RULES,
   ALLOWED_OVERRIDE_OFF_RULES,
+  LAYER_IMPORT_POLICY,
   LINT_CATEGORIES,
   LINT_IGNORE_PATTERNS,
   LINT_PLUGINS,
   REPOSITORY_WIDE_FILE_PATTERNS,
   REQUIRED_ERROR_RULES,
+  WORKSPACE_IMPORT_DENY,
 } from './lint-policy.ts';
 
 const severityValueSchema = z.union([z.string(), z.tuple([z.string()]).rest(z.unknown())]);
@@ -183,5 +185,88 @@ describe('適用範囲', () => {
 
   it('リポジトリ全体を覆う override でルールを off にしていない', () => {
     expect(disabledEverywhere).toStrictEqual([]);
+  });
+});
+
+/**
+ * `no-restricted-imports` の値。severity と設定オブジェクトの形を厳密に見る。
+ * 緩い形で受けると、`patterns` を空配列にした改ざんを検出できない。
+ */
+const restrictedImportsSchema = z.tuple([
+  z.literal('error'),
+  z
+    .object({
+      patterns: z
+        .array(z.object({ group: z.array(z.string()), message: z.string() }).strict())
+        .length(1),
+    })
+    .strict(),
+]);
+
+type LayerRule = { readonly files: readonly string[]; readonly allowed: readonly string[] };
+
+/** `group` から allowlist（`!` 付き）を取り出す。ワークスペース名だけに正規化する。 */
+function allowedWorkspaces(group: readonly string[]): string[] {
+  return [
+    ...new Set(
+      group
+        .filter((pattern) => pattern.startsWith('!'))
+        .map((pattern) => pattern.slice(1).replace(/\/\*\*$/u, '')),
+    ),
+  ];
+}
+
+/** `.oxlintrc.json` の `no-restricted-imports` を、出現順のまま取り出す。 */
+function declaredLayerRules(): LayerRule[] {
+  return config.overrides
+    .filter((override) => override.rules?.['no-restricted-imports'] !== undefined)
+    .map((override) => {
+      const [, options] = restrictedImportsSchema.parse(override.rules?.['no-restricted-imports']);
+      const group = options.patterns[0]?.group ?? [];
+      return { files: override.files, allowed: allowedWorkspaces(group) };
+    });
+}
+
+/** 各層の `group` 先頭が持つ遮断パターン。重複を潰した形で比較する。 */
+function declaredDenyHeads(): string[] {
+  return [
+    ...new Set(
+      config.overrides
+        .filter((override) => override.rules?.['no-restricted-imports'] !== undefined)
+        .map((override) => {
+          const [, options] = restrictedImportsSchema.parse(
+            override.rules?.['no-restricted-imports'],
+          );
+          return (options.patterns[0]?.group ?? [])
+            .slice(0, WORKSPACE_IMPORT_DENY.length)
+            .join(',');
+        }),
+    ),
+  ];
+}
+
+const declaredLayers = declaredLayerRules();
+const denyHeads = declaredDenyHeads();
+const dbReachableFiles = LAYER_IMPORT_POLICY.filter((rule) =>
+  rule.allowed.some((workspace) => workspace === '@seri/db'),
+).flatMap((rule) => rule.files);
+
+describe('層の依存方向と認可スコープの境界', () => {
+  it('対象ファイルと許可先が宣言したポリシーと完全に一致する（出現順を含む）', () => {
+    // 出現順まで見るのは、oxlint の override が後勝ちだから。
+    // `*-table.ts` の許可が `apps/api/src/**` の禁止より前に来ると db が全域で通る
+    expect(declaredLayers).toStrictEqual(LAYER_IMPORT_POLICY);
+  });
+
+  it('どの層もワークスペース全体をサブパスごと遮断してから許可している', () => {
+    // 先頭の遮断に `@seri/*/**` が無いと `@seri/db/schema` が素通りする（過去に実際に起きた）
+    expect(denyHeads).toStrictEqual([WORKSPACE_IMPORT_DENY.join(',')]);
+  });
+
+  it('生の Drizzle テーブルに触れる範囲が広がっていない', () => {
+    expect(dbReachableFiles).toStrictEqual([
+      'apps/api/src/repositories/*-table.ts',
+      'apps/api/src/lib/auth.ts',
+    ]);
   });
 });
