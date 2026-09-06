@@ -120,12 +120,12 @@ git submodule 案も採らなかった。SHA 固定と `workspaces` がそのま
 A 層に移せるかは、検査がリポジトリの**形**を知っているかで決まる。実際に依存を見ると
 きれいに割れた。
 
-| 区分                       | 検査                                                                                              | 置き場所 |
-| -------------------------- | ------------------------------------------------------------------------------------------------- | -------- |
-| 枠組み                     | `lib/`（context / exec / report / walk / bin）、`collect`、`groups`                                | A 層     |
-| 形を知らない検査           | test ratio / duplication / dead code / secret scan / supply chain / context drift                 | A 層     |
-| しきい値で形を受け取る検査 | bundle size（対象ディレクトリを設定で受ける）                                                     | A 層     |
-| 形に依存する検査           | openapi drift / openapi breaking / schema drift / migration safety / contract error drift        | **C 層** |
+| 区分                       | 検査                                                                                      | 置き場所 |
+| -------------------------- | ----------------------------------------------------------------------------------------- | -------- |
+| 枠組み                     | `lib/`（context / exec / report / walk / bin）、`collect`、`groups`                       | A 層     |
+| 形を知らない検査           | test ratio / duplication / dead code / secret scan / supply chain / context drift         | A 層     |
+| しきい値で形を受け取る検査 | bundle size（対象ディレクトリを設定で受ける）                                             | A 層     |
+| 形に依存する検査           | openapi drift / openapi breaking / schema drift / migration safety / contract error drift | **C 層** |
 
 C 層の検査は oRPC の契約と Drizzle のマイグレーションという**このテンプレート固有の
 構造**を直接読んでいる（`packages/contract/src`、`packages/db/migrations`、
@@ -138,7 +138,7 @@ C 層の検査は oRPC の契約と Drizzle のマイグレーションという
 import { runFitness } from '@seri/base-tooling/fitness';
 import { projectChecks } from './checks/index.ts';
 
-process.exit(await runFitness({ extraChecks: projectChecks }) ? 0 : 1);
+process.exit((await runFitness({ extraChecks: projectChecks })) ? 0 : 1);
 ```
 
 これは「共通ライブラリが枠を持ち、プロジェクトが中身を足す」形そのもので、

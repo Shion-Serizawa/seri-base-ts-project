@@ -1,4 +1,5 @@
 import { checkExternalTools } from '../checks/external-tools.ts';
+import { checkLintPolicy } from '../checks/lint-policy.ts';
 import { checkSecretScan } from '../checks/secret-scan.ts';
 import { checkSizeBudget } from '../checks/size-budget.ts';
 import { checkSupplyChain } from '../checks/supply-chain.ts';
@@ -21,5 +22,6 @@ export function collectCodebaseChecks(context: FitnessContext): CheckResult[] {
     ...checkSizeBudget(context),
     ...checkSupplyChain(context),
     checkSecretScan(context),
+    ...checkLintPolicy(context),
   ];
 }
