@@ -296,6 +296,37 @@
                   "@seri/*/**",
                   "!@seri/contract",
                   "!@seri/contract/**",
+                  "!@seri/domain",
+                  "!@seri/domain/**"
+                ],
+                "message": "api が依存できるのは contract / domain と、テーブル境界（*-table.ts）経由の db だけ"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // -------------------------------------------------------------------
+      // 認可スコープの境界（適応度関数 ⑭）
+      //
+      // 生の Drizzle テーブルに触れるのは `*-table.ts` と better-auth の初期化だけ。
+      // それ以外のファイルは `@seri/db` を import できないので、
+      // where 句にセッションのユーザーを付け忘れたクエリを書く経路が存在しない。
+      // 後方の override が同じルールを上書きするため、この項目は api の層規則より後に置く。
+      // -------------------------------------------------------------------
+      "files": ["apps/api/src/repositories/*-table.ts", "apps/api/src/lib/auth.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@seri/*",
+                  "@seri/*/**",
+                  "!@seri/contract",
+                  "!@seri/contract/**",
                   "!@seri/db",
                   "!@seri/db/**",
                   "!@seri/domain",
