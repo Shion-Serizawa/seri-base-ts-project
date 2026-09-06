@@ -62,6 +62,25 @@ describe('formatPlan', () => {
     );
   });
 
+  it('保守性にはコードスメルの一覧を添える', () => {
+    const output = render(['packages/domain/src/todo.ts']);
+
+    expect(output).toContain('Feature Envy');
+    expect(output).toContain('Primitive Obsession');
+    expect(output).toContain('すべて判断であって違反ではない');
+  });
+
+  it('スメルにはリポジトリの規約が優先することを毎回添える', () => {
+    expect(render(['packages/domain/src/todo.ts'])).toContain('規約の側が正しい');
+  });
+
+  it('スメルを持たない観点には一覧を出さない', () => {
+    const output = render(['apps/api/src/app.ts']);
+    const reliability = output.slice(output.indexOf('## 信頼性'));
+
+    expect(reliability).not.toContain('Feature Envy');
+  });
+
   it('常設の 2 観点は必ず出る', () => {
     const output = render(['README.md']);
 

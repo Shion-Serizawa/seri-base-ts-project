@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { DIMENSIONS } from './dimensions.ts';
 import type { DimensionKey } from './dimensions.ts';
 import { routeReview } from './route.ts';
+import { CODE_SMELLS } from './smells.ts';
 
 function keysOf(changed: readonly string[]): DimensionKey[] {
   return routeReview(changed, DIMENSIONS.length).selected.map((routed) => routed.dimension.key);
@@ -165,6 +166,29 @@ describe('DIMENSIONS の定義', () => {
     for (const dimension of DIMENSIONS) {
       expect(dimension.focus.length).toBeGreaterThan(0);
       expect(dimension.evidence.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('コードスメルの基準を持つのは保守性だけ', () => {
+    const withBaseline = DIMENSIONS.filter((dimension) => dimension.baseline !== undefined);
+
+    expect(withBaseline.map((dimension) => dimension.key)).toStrictEqual(['maintainability']);
+  });
+
+  it('すべてのスメルが名前・症状・直し方を持つ', () => {
+    for (const smell of CODE_SMELLS) {
+      expect(smell.name.length).toBeGreaterThan(0);
+      expect(smell.symptom.length).toBeGreaterThan(0);
+      expect(smell.fix.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('すべてのスメルが docs/quality/iso25010.md に記載されている', () => {
+    // 症状の名前が文書とコードでずれると、レビューの指摘と読み物が別物になる。
+    const document = readFileSync('docs/quality/iso25010.md', 'utf8');
+
+    for (const smell of CODE_SMELLS) {
+      expect(document).toContain(smell.name);
     }
   });
 
