@@ -1,4 +1,4 @@
-import type { NewTodoRow, TodoRow } from '@seri/db';
+import type { TodoRow } from '@seri/db';
 import { createDb, todos } from '@seri/db';
 import { and, eq } from 'drizzle-orm';
 
@@ -16,13 +16,15 @@ import type { Bindings } from '../env.ts';
  */
 export type OwnedTodoTable = {
   readonly all: () => Promise<TodoRow[]>;
-  readonly insert: (todo: Omit<NewTodoRow, 'userId'>) => Promise<TodoRow>;
-  readonly update: (id: string, values: OwnedTodoUpdate) => Promise<TodoRow | undefined>;
+  /** `userId` は呼び出し側から渡せない。所有者を指定した挿入を型で禁じるため。 */
+  readonly insert: (todo: Omit<TodoRow, 'userId'>) => Promise<TodoRow>;
+  /** 更新できるのは `done` と `title` だけ。所有者と id が変わる更新を型で禁じる。 */
+  readonly update: (
+    id: string,
+    values: Partial<Pick<TodoRow, 'done' | 'title'>>,
+  ) => Promise<TodoRow | undefined>;
   readonly remove: (id: string) => Promise<boolean>;
 };
-
-/** 所有者が変わる更新を型で禁じるため、`userId` と `id` を含めない。 */
-export type OwnedTodoUpdate = Partial<Pick<TodoRow, 'done' | 'title'>>;
 
 export function ownedTodos(env: Bindings, userId: string): OwnedTodoTable {
   const db = createDb(env.DB);
@@ -32,15 +34,11 @@ export function ownedTodos(env: Bindings, userId: string): OwnedTodoTable {
   return {
     all: async () => await db.select().from(todos).where(mine).all(),
 
+    // 挿入する行をこちらで組み立てて返す。`returning()` の結果を見て
+    // 「0 行だったら」を分岐で書くと、実行され得ない枝がカバレッジに残る。
     insert: async (todo) => {
-      const rows = await db
-        .insert(todos)
-        .values({ ...todo, userId })
-        .returning();
-      const row = rows[0];
-      if (row === undefined) {
-        throw new Error('Todo を作成できませんでした');
-      }
+      const row = { ...todo, userId };
+      await db.insert(todos).values(row).run();
       return row;
     },
 
