@@ -9,6 +9,9 @@
  * 指摘がノイズで埋まり、レビューごと回されなくなる（CLAUDE.md の「二重にやらない」）。
  */
 
+import type { Smell } from './smells.ts';
+import { CODE_SMELLS } from './smells.ts';
+
 export type DimensionKey =
   | 'functional-suitability'
   | 'performance-efficiency'
@@ -31,6 +34,11 @@ export type Dimension = {
   readonly evidence: readonly string[];
   /** この観点で既に落ちるゲート。ここに挙げたものは指摘しない。 */
   readonly coveredByGates: readonly string[];
+  /**
+   * 名前の付いた症状の一覧（あれば）。観点の粗い切り口だけだと、
+   * レビューする側の語彙に依存して見落ちるため。
+   */
+  readonly baseline?: readonly Smell[];
 };
 
 export const DIMENSIONS: readonly Dimension[] = [
@@ -39,14 +47,19 @@ export const DIMENSIONS: readonly Dimension[] = [
     name: '機能適合性',
     always: true,
     focus: [
-      '依頼された振る舞いと実装が一致しているか。頼まれていない仕様を足していないか',
+      '**先に照合先を特定する。** 依頼された内容・ADR・契約（packages/contract）・既存テストの順',
+      '仕様が求めているのに欠けている／中途半端なもの',
+      '仕様が求めていないのに入っているもの（スコープの逸脱）',
+      '実装済みに見えるが、実装の仕方が仕様と食い違っているもの',
       '正常系だけになっていないか（空・0・境界・重複・並行・部分失敗）',
       'packages/domain の不変条件が守られているか。時刻と乱数を引数で受けているか',
       '型テスト（*.test-d.ts）が守っている性質を実装が崩していないか',
     ],
     evidence: [
+      '指摘ごとに、照合先の該当箇所（依頼の文・ADR の行・契約の定義）を引用する',
       '該当するテストの名前と、それが失敗する変更を1つ挙げる（挙げられないなら牽制していない）',
       '境界値のうちテストが無いものを列挙する',
+      '照合先が見つからない場合は「仕様が無い」と報告する。**無いことを指摘なしにしない**',
     ],
     coveredByGates: ['① カバレッジ', '④ ミューテーションスコア'],
   },
@@ -65,6 +78,7 @@ export const DIMENSIONS: readonly Dimension[] = [
       '触ったファイル数と、その内訳（本質的な変更 / 追随した変更）',
     ],
     coveredByGates: ['③ 重複率', '⑤ 複雑度', '⑥⑥′ デッドコード', '⑦ 層の境界', '⑪ Lint 設定'],
+    baseline: CODE_SMELLS,
   },
   {
     key: 'compatibility',

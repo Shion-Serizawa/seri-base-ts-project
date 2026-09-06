@@ -7,6 +7,26 @@ import type { ReviewPlan, RoutedDimension } from './route.ts';
  * それ単体で完結している（他の観点を読まないと意味が通らない書き方をしない）。
  */
 
+/**
+ * 名前の付いた症状の一覧。持っている観点にだけ出す。
+ *
+ * 「リポジトリの規約が優先する」「すべて判断であって違反ではない」の 2 つを
+ * 毎回添える。添えないと、症状の名前が独り歩きして規約より強く読まれる。
+ */
+function baselineLines(dimension: RoutedDimension['dimension']): string[] {
+  if (dimension.baseline === undefined) {
+    return [];
+  }
+  return [
+    '名前の付いた症状（見落としを防ぐための語彙。**すべて判断であって違反ではない**）:',
+    ...dimension.baseline.map((smell) => `- ${smell.name}: ${smell.symptom} → ${smell.fix}`),
+    '',
+    'リポジトリの規約（README / ADR / lint 設定）が是としている書き方は、',
+    'ここに当てはまっても指摘しない。規約の側が正しい。',
+    '',
+  ];
+}
+
 function block(routed: RoutedDimension): string[] {
   const { dimension } = routed;
   return [
@@ -18,6 +38,7 @@ function block(routed: RoutedDimension): string[] {
     '見る観点:',
     ...dimension.focus.map((line) => `- ${line}`),
     '',
+    ...baselineLines(dimension),
     '証拠として出すもの（主張だけの報告は受け付けない）:',
     ...dimension.evidence.map((line) => `- ${line}`),
     '',
