@@ -3,7 +3,8 @@
   "private": true,
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "tooling/*"
   ],
   "type": "module",
   "scripts": {
@@ -34,6 +35,7 @@
     "@orpc/zod": "1.15.0",
     "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
     "@seri/contract": "workspace:*",
+    "@seri/vitest-config": "workspace:*",
     "@stryker-mutator/core": "10.0.0",
     "@stryker-mutator/vitest-runner": "10.0.0",
     "@types/node": "26.2.0",

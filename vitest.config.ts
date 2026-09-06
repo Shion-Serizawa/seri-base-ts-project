@@ -1,6 +1,5 @@
+import { createVitestConfig } from '@seri/vitest-config';
 import { defineConfig } from 'vitest/config';
-
-import { createVitestConfig } from './vitest.shared.ts';
 
 /**
  * ルートワークスペース（`scripts/**`）のテスト設定。

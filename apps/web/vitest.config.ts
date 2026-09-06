@@ -1,7 +1,6 @@
+import { createVitestConfig, TEST_INCLUDE } from '@seri/vitest-config';
 import react from '@vitejs/plugin-react';
 import { defineConfig, mergeConfig } from 'vitest/config';
-
-import { createVitestConfig, TEST_INCLUDE } from '../../vitest.shared.ts';
 
 export default mergeConfig(
   defineConfig({ plugins: [react()] }),

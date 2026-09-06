@@ -17,6 +17,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553"
+    "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
+    "@seri/vitest-config": "workspace:*"
   }
 }
