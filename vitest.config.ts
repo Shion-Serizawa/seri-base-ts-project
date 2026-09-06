@@ -20,6 +20,7 @@ export default defineConfig(
       'scripts/git/check-commit-message.ts',
       'scripts/mutation/run-changed.ts',
       'scripts/openapi/write-spec.ts',
+      'scripts/review/run-plan.ts',
       'scripts/hooks/require-commit.ts',
       'scripts/hooks/post-edit.ts',
       // テスト専用のフィクスチャヘルパ

@@ -23,8 +23,10 @@ scripts/
   openapi/      契約から OpenAPI ドキュメントを生成
   git/          Conventional Commits 検査
   hooks/        Claude Code のフック（未コミット検出・再生成の案内）
+  review/       変更内容からレビュー観点を決める決定論ルーター
 docs/
   openapi.json  生成物。契約との乖離を適応度関数 ⑫ が検出する
+  quality/      ISO/IEC 25010 のレビュー観点（ゲートが見ないものだけ）
 CLAUDE.md       AI に渡す索引と禁止事項（参照切れを適応度関数 ⑬ が検出する）
 .claude/        permissions・フック定義・スキル
 ```
@@ -68,6 +70,7 @@ bun run dev
 | `bun run test:scripts`            | 適応度関数の実装（`scripts/`）のテストのみ        |
 | `bun run openapi:generate`        | 契約から `docs/openapi.json` を生成               |
 | `bun run fitness`                 | 適応度関数の一括計測                              |
+| `bun run review:plan`             | 変更内容から起動すべきレビュー観点を出す          |
 | `bun run fitness:deps`            | サプライチェーンのみ高速検証                      |
 | `bun run mutation`                | 変更ファイルのミューテーションテスト              |
 | `bun run deps:audit`              | `bun audit`                                       |
@@ -97,6 +100,11 @@ oxlint / stryker / jscpd の設定ファイル側の数値と食い違ってい�
 | ⑪   | **Lint 設定そのものの改ざんゼロ**                   | `tooling/quality-gates` のテスト             | ゲートに詰まったら設定を緩める        | ⑪ が全指標を守る                     |
 | ⑫   | 契約と OpenAPI ドキュメントの乖離ゼロ               | `bun run fitness`                            | —                                     | —                                    |
 | ⑬   | `CLAUDE.md` とスキルの参照切れゼロ                  | `bun run fitness`                            | **文書ごと消す**                      | ⑬ が「文書なし」を FAIL にする       |
+| ⑭   | 認可スコープをテーブル境界に閉じ込める              | oxlint（`no-restricted-imports`）＋ 型       | 境界の内側に絞り込まない操作を足す    | allowlist の拡大は ⑪ が塞ぐ          |
+| ⑮   | 契約が宣言したエラーの未実装ゼロ                    | `bun run fitness`                            | —                                     | ⑫ と対（宣言と実装の両側）           |
+| ⑯   | 公開 API の破壊的変更が未宣言でないこと             | `bun run fitness`                            | 破壊的変更として宣言する              | 宣言が履歴に残る（⑫ の上に乗る）     |
+| ⑰   | 破壊的マイグレーションが未承認でないこと            | `bun run fitness`                            | 承認コメントを書く                    | 承認理由がファイルに残る（⑩ と対）   |
+| ⑱   | 組み立てた DOM のアクセシビリティ違反ゼロ           | Vitest（axe）                                | —                                     | 静的な不備は `jsx-a11y` が見る       |
 
 ⑪ は他のすべての指標の前提です。カテゴリの severity、error にしているルールの集合、
 off にしているルールの集合、override で無効化しているルールを
@@ -125,7 +133,7 @@ off にしているルールの集合、override で無効化しているルー�
 **適応度関数の実装（`scripts/`）自体もテスト対象です。** ここのバグは
 「ゲートが黙って緑になる」形で現れ、型検査でも他のテストでも捕まりません
 （実際に過去 2 件のゲートがこれで機能していませんでした）。
-各検査は `FitnessContext`（`root` / `run` / `ci`）を引数で受け取るので、
+各検査は `FitnessContext`（`root` / `run` / `ci` / `baseRef`）を引数で受け取るので、
 テストは一時ディレクトリに作った擬似リポジトリと差し替えたコマンド実行に対して走ります
 （knip も gitleaks も起動しません）。`bun run test:scripts` で単体実行できます。
 
@@ -133,6 +141,38 @@ off にしているルールの集合、override で無効化しているルー�
 ファイルと `bun run` のスクリプトが実在することを検査します。ここが古くなる壊れ方は
 誰にも見えません。AI は存在しないパスを黙って諦め、存在しないコマンドを打って別の理由で
 失敗するので、原因が文書の陳腐化だと気づけないためです。
+
+⑯ と ⑰ は、⑫ と ⑩ が**乖離しか見ていなかった**穴を塞ぎます。契約と一緒にドキュメントを
+再生成すればフィールドを消しても ⑫ は緑で通り、列を消すマイグレーションを正しく生成すれば
+⑩ は緑で通ります。⑯ は基準リビジョンとの集合差分で破壊的変更を検出し、
+Conventional Commits の `!` / `BREAKING CHANGE:` での宣言を要求します。⑰ は
+`DROP TABLE` / `DROP COLUMN` / 既存列への `NOT NULL` 追加 / `WHERE` 無しの一括更新を検出し、
+SQL ファイル内の `-- destructive: <理由>` での承認を要求します。どちらも
+**通す唯一の手段が意図の記録**なので、回避しても痕跡が残ります。
+
+⑯ の基準リビジョンは `FITNESS_BASE_REF`（既定は `main`）で指定します。基準が `HEAD` と
+同じコミットを指す場合（main の上での作業）は `HEAD~1` に落とし、落としたことを結果に
+表示します。差分が空になって「破壊的変更なし」と出るのを防ぐためです。CI では
+PR ならベースブランチ、push なら `HEAD~1` を渡します（④ ミューテーションと同じ形）。
+
+## コードレビュー（ISO/IEC 25010）
+
+決定論的ゲートが見ないもの（仕様との一致、責務の置き場所、信頼性、安全性など）は、
+ISO/IEC 25010:2023 の品質特性を軸に**観点ごとに独立したサブエージェント**でレビューします。
+
+```bash
+bun run review:plan   # 変更内容から、起動すべき観点とその理由を出す
+```
+
+起動する観点を決めるのは [`scripts/review/route.ts`](scripts/review/route.ts) の純関数です。
+**LLM に分類させません。** 分類器が観点を 1 つ黙って落とすと、レビューは
+「実施済み・指摘なし」を返し、それを検出する手段がありません。常設は機能適合性と保守性の
+2 件で、残り 7 件は変更されたパスで発火します。同時起動は 5 件までにし、
+上限で溢れた観点は「今回は起動しない観点」として出力に残します。
+
+観点の一覧は [docs/quality/iso25010.md](docs/quality/iso25010.md)、手順は
+`.claude/skills/quality-review/SKILL.md`、判断の経緯は
+[docs/adr/0009-iso25010-review-layer.md](docs/adr/0009-iso25010-review-layer.md) にあります。
 
 ## API ドキュメント（OpenAPI）
 
