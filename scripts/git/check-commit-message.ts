@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
 
-import { firstLineOf, isValidCommitMessage, violationMessage } from './commit-message.ts';
+import {
+  firstLineOf,
+  isValidCommitMessage,
+  violationMessage,
+} from '@seri/base-tooling/git/commit-message';
 
 const messagePath = process.argv[2];
 if (messagePath === undefined) {
