@@ -63,7 +63,9 @@ jobs:
         run: bun run format:check
 
       - name: lint (type-aware)
-        run: bun run lint
+        # oxlint は CI を検出して GitHub の注釈形式で出すが、その形式は `help:`
+        # （原因と直し方）を落とす。失敗したときだけ既定の形式でもう一度出す。
+        run: bun run lint || (bun run lint --format=default; exit 1)
 
       - name: typecheck
         run: |
