@@ -7,7 +7,7 @@
       "devDependencies": {
         "@orpc/openapi": "1.15.0",
         "@orpc/zod": "1.15.0",
-        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081",
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
         "@seri/contract": "workspace:*",
         "@stryker-mutator/core": "10.0.0",
         "@stryker-mutator/vitest-runner": "10.0.0",
@@ -45,7 +45,7 @@
         "@cloudflare/workers-types": "5.20260816.1",
         "@orpc/client": "1.15.0",
         "@orpc/contract": "1.15.0",
-        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081",
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
       },
     },
     "apps/web": {
@@ -64,7 +64,7 @@
       },
       "devDependencies": {
         "@orpc/contract": "1.15.0",
-        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081",
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
         "@tanstack/router-plugin": "1.168.32",
         "@testing-library/jest-dom": "7.0.1",
         "@testing-library/react": "16.3.2",
@@ -85,7 +85,7 @@
         "zod": "4.4.3",
       },
       "devDependencies": {
-        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081",
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
       },
     },
     "packages/db": {
@@ -95,7 +95,7 @@
         "drizzle-orm": "0.45.2",
       },
       "devDependencies": {
-        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081",
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
       },
     },
     "packages/domain": {
@@ -105,7 +105,7 @@
         "@seri/contract": "workspace:*",
       },
       "devDependencies": {
-        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#89ac04f6ce4fb51d20005e91abacbd2ce2685081",
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
       },
     },
   },
@@ -638,7 +638,7 @@
 
     "@seri/api": ["@seri/api@workspace:apps/api"],
 
-    "@seri/base-tooling": ["@seri/base-tooling@github:Shion-Serizawa/seri-base-tooling#89ac04f", {}, "Shion-Serizawa-seri-base-tooling-89ac04f", "sha512-Leiz55tT72tYEy+Lr4BWgWubudsXo9jPxSQABDjBYQN1m0bEE382UE0G3SftfRRMZktFP+qcA5I9HIhFaf+dAQ=="],
+    "@seri/base-tooling": ["@seri/base-tooling@github:Shion-Serizawa/seri-base-tooling#a17f3eb", {}, "Shion-Serizawa-seri-base-tooling-a17f3eb", "sha512-P4FCaiSh4lFvWfx1Vz/freff8KKnjFoK7ctviQnQ2bGrOV2qrKxSXXDb259iz0/YLnr06NnURjPFxbYN174obQ=="],
 
     "@seri/contract": ["@seri/contract@workspace:packages/contract"],
 
