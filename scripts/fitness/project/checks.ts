@@ -3,6 +3,7 @@ import type { CheckResult } from '@seri/base-tooling/fitness/report';
 
 import { checkContractErrorDrift } from './contract-error-drift.ts';
 import { checkLayerBoundary } from './layer-boundary.ts';
+import { checkLayerTargets } from './layer-targets.ts';
 import { checkMigrationSafety } from './migration-safety.ts';
 import { checkOpenApiBreaking } from './openapi-breaking.ts';
 import { checkOpenApiDrift } from './openapi-drift.ts';
@@ -27,5 +28,6 @@ export async function collectProjectChecks(context: FitnessContext): Promise<Che
     checkMigrationSafety(context),
     checkContractErrorDrift(context),
     ...checkLayerBoundary(context),
+    checkLayerTargets(context),
   ];
 }
