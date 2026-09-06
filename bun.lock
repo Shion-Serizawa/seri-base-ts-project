@@ -9,6 +9,7 @@
         "@orpc/zod": "1.15.0",
         "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
         "@seri/contract": "workspace:*",
+        "@seri/vitest-config": "workspace:*",
         "@stryker-mutator/core": "10.0.0",
         "@stryker-mutator/vitest-runner": "10.0.0",
         "@types/node": "26.2.0",
@@ -46,6 +47,7 @@
         "@orpc/client": "1.15.0",
         "@orpc/contract": "1.15.0",
         "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
+        "@seri/vitest-config": "workspace:*",
       },
     },
     "apps/web": {
@@ -65,6 +67,7 @@
       "devDependencies": {
         "@orpc/contract": "1.15.0",
         "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
+        "@seri/vitest-config": "workspace:*",
         "@tanstack/router-plugin": "1.168.32",
         "@testing-library/jest-dom": "7.0.1",
         "@testing-library/react": "16.3.2",
@@ -86,6 +89,7 @@
       },
       "devDependencies": {
         "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
+        "@seri/vitest-config": "workspace:*",
       },
     },
     "packages/db": {
@@ -96,6 +100,7 @@
       },
       "devDependencies": {
         "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
+        "@seri/vitest-config": "workspace:*",
       },
     },
     "packages/domain": {
@@ -104,6 +109,14 @@
       "dependencies": {
         "@seri/contract": "workspace:*",
       },
+      "devDependencies": {
+        "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
+        "@seri/vitest-config": "workspace:*",
+      },
+    },
+    "tooling/vitest-config": {
+      "name": "@seri/vitest-config",
+      "version": "0.0.0",
       "devDependencies": {
         "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#a17f3ebd53a10bfc66300028b460df2276ad1553",
       },
@@ -645,6 +658,8 @@
     "@seri/db": ["@seri/db@workspace:packages/db"],
 
     "@seri/domain": ["@seri/domain@workspace:packages/domain"],
+
+    "@seri/vitest-config": ["@seri/vitest-config@workspace:tooling/vitest-config"],
 
     "@seri/web": ["@seri/web@workspace:apps/web"],
 
@@ -1397,6 +1412,18 @@
     "@esbuild-kit/core-utils/esbuild": ["esbuild@0.18.20", "", { "optionalDependencies": { "@esbuild/android-arm": "0.18.20", "@esbuild/android-arm64": "0.18.20", "@esbuild/android-x64": "0.18.20", "@esbuild/darwin-arm64": "0.18.20", "@esbuild/darwin-x64": "0.18.20", "@esbuild/freebsd-arm64": "0.18.20", "@esbuild/freebsd-x64": "0.18.20", "@esbuild/linux-arm": "0.18.20", "@esbuild/linux-arm64": "0.18.20", "@esbuild/linux-ia32": "0.18.20", "@esbuild/linux-loong64": "0.18.20", "@esbuild/linux-mips64el": "0.18.20", "@esbuild/linux-ppc64": "0.18.20", "@esbuild/linux-riscv64": "0.18.20", "@esbuild/linux-s390x": "0.18.20", "@esbuild/linux-x64": "0.18.20", "@esbuild/netbsd-x64": "0.18.20", "@esbuild/openbsd-x64": "0.18.20", "@esbuild/sunos-x64": "0.18.20", "@esbuild/win32-arm64": "0.18.20", "@esbuild/win32-ia32": "0.18.20", "@esbuild/win32-x64": "0.18.20" }, "bin": { "esbuild": "bin/esbuild" } }, "sha512-ceqxoedUrcayh7Y7ZX6NdbbDzGROiyVBgC4PriJThBKSVPWnnFHZAkfI1lJT8QFkOwH4qOS2SJkS4wvpGl8BpA=="],
 
     "@poppinss/dumper/supports-color": ["supports-color@10.2.2", "", {}, "sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g=="],
+
+    "@seri/api/@seri/base-tooling": ["@seri/base-tooling@github:Shion-Serizawa/seri-base-tooling#a17f3eb", {}, "Shion-Serizawa-seri-base-tooling-a17f3eb", "sha512-P4FCaiSh4lFvWfx1Vz/freff8KKnjFoK7ctviQnQ2bGrOV2qrKxSXXDb259iz0/YLnr06NnURjPFxbYN174obQ=="],
+
+    "@seri/contract/@seri/base-tooling": ["@seri/base-tooling@github:Shion-Serizawa/seri-base-tooling#a17f3eb", {}, "Shion-Serizawa-seri-base-tooling-a17f3eb", "sha512-P4FCaiSh4lFvWfx1Vz/freff8KKnjFoK7ctviQnQ2bGrOV2qrKxSXXDb259iz0/YLnr06NnURjPFxbYN174obQ=="],
+
+    "@seri/db/@seri/base-tooling": ["@seri/base-tooling@github:Shion-Serizawa/seri-base-tooling#a17f3eb", {}, "Shion-Serizawa-seri-base-tooling-a17f3eb", "sha512-P4FCaiSh4lFvWfx1Vz/freff8KKnjFoK7ctviQnQ2bGrOV2qrKxSXXDb259iz0/YLnr06NnURjPFxbYN174obQ=="],
+
+    "@seri/domain/@seri/base-tooling": ["@seri/base-tooling@github:Shion-Serizawa/seri-base-tooling#a17f3eb", {}, "Shion-Serizawa-seri-base-tooling-a17f3eb", "sha512-P4FCaiSh4lFvWfx1Vz/freff8KKnjFoK7ctviQnQ2bGrOV2qrKxSXXDb259iz0/YLnr06NnURjPFxbYN174obQ=="],
+
+    "@seri/vitest-config/@seri/base-tooling": ["@seri/base-tooling@github:Shion-Serizawa/seri-base-tooling#a17f3eb", {}, "Shion-Serizawa-seri-base-tooling-a17f3eb", "sha512-P4FCaiSh4lFvWfx1Vz/freff8KKnjFoK7ctviQnQ2bGrOV2qrKxSXXDb259iz0/YLnr06NnURjPFxbYN174obQ=="],
+
+    "@seri/web/@seri/base-tooling": ["@seri/base-tooling@github:Shion-Serizawa/seri-base-tooling#a17f3eb", {}, "Shion-Serizawa-seri-base-tooling-a17f3eb", "sha512-P4FCaiSh4lFvWfx1Vz/freff8KKnjFoK7ctviQnQ2bGrOV2qrKxSXXDb259iz0/YLnr06NnURjPFxbYN174obQ=="],
 
     "@stryker-mutator/instrumenter/@babel/core": ["@babel/core@8.0.1", "", { "dependencies": { "@babel/code-frame": "^8.0.0", "@babel/generator": "^8.0.0", "@babel/helper-compilation-targets": "^8.0.0", "@babel/helpers": "^8.0.0", "@babel/parser": "^8.0.0", "@babel/template": "^8.0.0", "@babel/traverse": "^8.0.0", "@babel/types": "^8.0.0", "@types/gensync": "^1.0.5", "convert-source-map": "^2.0.0", "empathic": "^2.0.1", "gensync": "^1.0.0-beta.2", "import-meta-resolve": "^4.2.0", "json5": "^2.2.3", "obug": "^2.1.1", "semver": "^7.7.3" } }, "sha512-5FgxM4dLQpMJHSiVATk8foW263dVHQHBVpXYiimNECVWG01f4nFyEbQixeT6Mwvg7TayREJ2gpKl3o2RoMdnqw=="],
 
