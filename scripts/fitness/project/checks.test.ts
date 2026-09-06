@@ -30,8 +30,28 @@ async function healthyRoot(): Promise<string> {
     'apps/api/src/rpc/router.ts': 'const h = () => { throw errors.UNAUTHORIZED(); };\n',
     // ⑰ 破壊的マイグレーション: 破壊的な文を含まないマイグレーション
     'packages/db/migrations/0000_init.sql': 'CREATE TABLE `todo` (`id` text NOT NULL);',
+    // ⑳ 層のパターンの到達: 宣言した対象がすべて 1 件以上存在する状態
+    ...layerTargetFiles(),
     [OPENAPI_SPEC_PATH]: serializeOpenApiDocument(await buildOpenApiDocument()),
   });
+}
+
+/**
+ * `layer-policy.ts` が宣言している対象を 1 件ずつ満たすファイル。
+ *
+ * ⑳ は「宣言したパターンが実ファイルに当たるか」を見るので、これが無いと
+ * 健全な擬似リポジトリでも FAIL する。落ちたときに検査の実装を疑う前に、
+ * ここの不足を疑うこと。
+ */
+function layerTargetFiles(): Record<string, string> {
+  return {
+    'packages/contract/src/todo.ts': 'export const a = 1;\n',
+    'packages/domain/src/todo.ts': 'export const a = 1;\n',
+    'packages/db/src/schema.ts': 'export const a = 1;\n',
+    'apps/api/src/lib/auth.ts': 'export const a = 1;\n',
+    'apps/api/src/repositories/todo-table.ts': 'export const a = 1;\n',
+    'apps/web/src/main.ts': 'export const a = 1;\n',
+  };
 }
 
 describe('collectProjectChecks', () => {
@@ -41,7 +61,7 @@ describe('collectProjectChecks', () => {
     expect(results.filter((result) => !result.ok)).toStrictEqual([]);
   });
 
-  it('リポジトリの形に依存する 5 本の検査を返す', async () => {
+  it('リポジトリの形に依存する 7 本の検査を返す', async () => {
     const results = await collectProjectChecks(contextOf(await healthyRoot(), stubRun(baseReply)));
 
     expect(results.map((result) => result.name)).toStrictEqual([
@@ -51,6 +71,7 @@ describe('collectProjectChecks', () => {
       'migration safety',
       'contract error drift',
       'layer boundary',
+      'layer targets',
     ]);
   });
 
@@ -62,6 +83,7 @@ describe('collectProjectChecks', () => {
         "const c = oc.errors({ UNAUTHORIZED: { message: '認証が必要です' } });\n",
       'apps/api/src/rpc/router.ts': 'const h = () => { throw errors.UNAUTHORIZED(); };\n',
       'packages/db/migrations/0000_init.sql': 'CREATE TABLE `todo` (`id` text NOT NULL);',
+      ...layerTargetFiles(),
       [OPENAPI_SPEC_PATH]: '{"openapi":"3.1.1"}',
     });
 
