@@ -1,5 +1,10 @@
 # 0007. AI Coding 向けの Context 層を入れ、エージェント基盤は入れない
 
+> **注記**: 本文中のパス（`tooling/quality-gates`、`collect.ts` など）は当時の配置。
+> ゲートの本体は [ADR 0010](0010-base-repo-derivation-and-propagation.md) で
+> `@seri/base-tooling` へ移し、C 層の検査の登録先は `scripts/fitness/project/checks.ts` になった。
+> この文書は当時の判断の記録であり、現行の配置は [README.md](../../README.md) が持つ。
+
 ## 背景
 
 このリポジトリは最初から「AI Coding 前提の品質ゲート」を中核に据えてきたが、

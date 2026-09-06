@@ -3,6 +3,10 @@
 - 日付: 2026-08-23
 - 状態: 採用
 
+> **注記**: 本文中の `tooling/quality-gates/**` は当時の配置。現在その実体は
+> `@seri/base-tooling` にある（[ADR 0010](0010-base-repo-derivation-and-propagation.md)）。
+> この文書は当時の判断の記録であり、現行の配置は [README.md](../../README.md) が持つ。
+
 ## 背景
 
 AI Coding では指標が「達成すべき目標」として直接最適化される。単一指標を置くと、
