@@ -1,8 +1,9 @@
-import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { loadEffectiveOxlintConfig } from '../test/oxlint-config.ts';
 import { QUALITY_GATES } from './index.ts';
 
 const oxlintRcSchema = z.object({
@@ -10,10 +11,11 @@ const oxlintRcSchema = z.object({
 });
 
 function loadOxlintRules(): Record<string, unknown> {
-  const raw = readFileSync(new URL('../../../.oxlintrc.json', import.meta.url), 'utf8');
-  // .oxlintrc.json は JSONC（コメント可）なので、行コメントを落としてから解析する
-  const withoutComments = raw.replaceAll(/^\s*\/\/.*$/gmu, '');
-  return oxlintRcSchema.parse(JSON.parse(withoutComments)).rules;
+  // しきい値は extends 先の base 設定にあるので、実効設定まで解決してから読む
+  const config = loadEffectiveOxlintConfig(
+    fileURLToPath(new URL('../../../.oxlintrc.json', import.meta.url)),
+  );
+  return oxlintRcSchema.parse(config).rules;
 }
 
 /**
