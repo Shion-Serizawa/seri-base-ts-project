@@ -33,7 +33,7 @@
   "devDependencies": {
     "@orpc/openapi": "1.15.0",
     "@orpc/zod": "1.15.0",
-    "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#40490b2e7c3615a76e47afd89fdda4375c0778d8",
+    "@seri/base-tooling": "github:Shion-Serizawa/seri-base-tooling#b92caf9b7a936fba7956b628aeaf2e740195e561",
     "@seri/contract": "workspace:*",
     "@seri/vitest-config": "workspace:*",
     "@stryker-mutator/core": "10.0.0",

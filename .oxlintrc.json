@@ -190,6 +190,31 @@
       "rules": {
         "unicorn/filename-case": "off"
       }
+    },
+    {
+      // -------------------------------------------------------------------
+      // 実行入口（`process.exit` で終わる数行のスクリプト）
+      //
+      // 標準出力に結果を出すことと、環境変数で基準リビジョンを受け取ることは、
+      // 入口の仕事である。判定ロジックは別モジュールにあり、そちらには適用しない。
+      //
+      // 以前は base 設定が `scripts/**/*.ts` を丸ごと緩めていたが、A 層に
+      // 「scripts というディレクトリがある」という形の知識を置くことになり、
+      // extends 先の overrides は使う側から取り消せないため撤去された。
+      // どのファイルが入口かを知っているのは使う側なので、ここで列挙する。
+      //
+      // `console.error` / `console.warn` は base 設定が元から許しているため、
+      // それしか使わない `scripts/hooks/**` と `scripts/git/**` は挙げていない。
+      // -------------------------------------------------------------------
+      "files": [
+        "scripts/mutation/run-changed.ts",
+        "scripts/openapi/write-spec.ts",
+        "scripts/review/run-plan.ts"
+      ],
+      "rules": {
+        "no-console": "off",
+        "node/no-process-env": "off"
+      }
     }
   ],
 
